@@ -8,11 +8,6 @@ fn generate_random_message_128() -> Vec<u8> {
     (0..16).map(|_| rand::random::<u8>()).collect()
 }
 
-fn generate_random_message() -> Vec<u8> {
-    (0..4).map(|_| rand::random::<u8>()).collect()
-}
-
-
 fn main() {
     println!("Testing Affine MAC"); 
     test_affine_mac();
@@ -63,9 +58,10 @@ fn test_ibkem() {
     let ibkem = IBKEM::new(2, l, 0);
     let (pk, sk) = ibkem.setup();
     println!("IBKEM setup: Success");
-    let idn= &generate_random_message_128();
-    println!("message : {:?}", &idn[0..8]);
-    let identity = idn;
+    // let idn= &generate_random_message_128();
+    // println!("message : {:?}", &idn[0..8]);
+    // let identity = idn;
+    let identity = b"test@gmail.com";
     let usk1 = ibkem.extract(&sk, identity);
     let (ct1, k1) = ibkem.encrypt(&pk, identity);
     let k1_dec = ibkem.decrypt(&usk1, identity, &ct1);
