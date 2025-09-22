@@ -1,7 +1,7 @@
-// use ark_ec::{PairingEngine, ProjectiveCurve};
-// use ark_bls12_381::{Bls12_381, Fr, G1Projective, G2Projective};
-// use ark_ff::{PrimeField, UniformRand, Zero, One, BigInteger256, BigInteger};
-// use rand::thread_rng;
+use ark_ec::{PairingEngine, ProjectiveCurve};
+use ark_bls12_381::{Bls12_381, Fr, G1Projective, G2Projective};
+use ark_ff::{PrimeField, UniformRand, Zero, One, BigInteger256, BigInteger};
+use rand::thread_rng;
 use ibe_schemes::*;
 
 fn generate_random_message_128() -> Vec<u8> {
@@ -15,6 +15,8 @@ fn main() {
     println!("Testing IBKEM");
     test_ibkem();    
 
+    println!("\nTesting QANIZK");
+    test_qanizk();
 }
 
 fn test_affine_mac() {
@@ -95,3 +97,38 @@ fn test_ibkem() {
 
 }
 
+fn test_qanizk() {
+    let k = 2;       
+    let lamda = 8;   
+    let qanizk = QANIZK::new(k, lamda);
+    println!("k={}, lambda={}", k, lamda);
+    let m_matrix = <()>::random_matrix(3 * k, k);
+    println!("matrix M ({}x{})", 3*k, k);
+    
+    let m_g1_matrix: Vec<Vec<G1Projective>> = m_matrix.iter()
+        .map(|row| row.iter()
+            .map(|&elem| qanizk.group.scalar_mul_p1(elem))
+            .collect())
+        .collect();
+  
+    println!("Generating CRS...");
+    let (crs, _trapdoor) = qanizk.gen_crs(&m_g1_matrix);
+    println!("CRS generation: success");
+    
+    let tag = b"test_valid_proof";
+    let r = <()>::random_vector(k);  
+    let c0_field = <()>::matrix_vector_mul(&m_matrix, &r); 
+    
+    let c0_g1: Vec<G1Projective> = c0_field.iter()
+        .map(|&elem| qanizk.group.scalar_mul_p1(elem))
+        .collect();
+    
+    let pie = qanizk.prove(&crs, tag, &c0_g1, &r);
+    println!("Proof generation: Success");
+
+    println!("  t1 length: {}", pie.t1_g1.len());
+    println!("  u1 length: {}", pie.u1_g1.len());
+    
+    let is_valid = qanizk.verify(&crs, tag, &c0_g1, &pie);
+    println!("Proof verification: {}", if is_valid { "Success" } else { "Failed" });
+}

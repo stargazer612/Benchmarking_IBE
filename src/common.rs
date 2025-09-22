@@ -71,6 +71,14 @@ pub trait FieldUtils {
     fn transpose_matrix(&self, matrix: &Matrix) -> Matrix;
     fn group_matrix_vector_mul_direct(matrix_g1: &Vec<Vec<G1Projective>>,vector: &Vector) -> Vec<G1Projective>;    
     fn group_matrix_vector_mul_msm(matrix_g1: &Vec<Vec<G1Projective>>,vector: &Vector) -> Vec<G1Projective>;
+    fn g1_matrix_field_multiply(&self, left_g1: &Vec<Vec<G1Projective>>, right_field: &Matrix) -> Vec<Vec<G1Projective>>;
+    fn field_matrix_g1_multiply(&self,left_field: &Matrix,right_g1: &Vec<Vec<G1Projective>>) -> Vec<Vec<G1Projective>>;
+    fn g1_matrix_field_vector_multiply(&self,matrix_g1: &Vec<Vec<G1Projective>>,vector_field: &Vector) -> Vec<G1Projective>;
+    fn transpose_g1_matrix(&self, matrix: &Vec<Vec<G1Projective>>) -> Vec<Vec<G1Projective>>;
+    fn transpose_g2_matrix(&self, matrix: &Vec<Vec<G2Projective>>) -> Vec<Vec<G2Projective>>;
+    fn vector_g1_matrix_multiply(&self,vector_field: &Vector,matrix_g1: &Vec<Vec<G1Projective>>) -> Vec<G1Projective>;
+    fn g1_vector_field_vector_dot(&self,g1_vector: &Vec<G1Projective>,field_vector: &Vector) -> G1Projective;
+    fn vector_g2_matrix_multiply(&self,vector_field: &Vector,matrix_g2: &Vec<Vec<G2Projective>>) -> Vec<G2Projective>;
 }
 
 impl FieldUtils for () {
@@ -175,5 +183,157 @@ impl FieldUtils for () {
             
             VariableBaseMSM::multi_scalar_mul(&row_affine, &scalars_repr)
         }).collect()
+    }
+
+    fn g1_matrix_field_multiply(&self, left_g1: &Vec<Vec<G1Projective>>, right_field: &Matrix) -> Vec<Vec<G1Projective>> {
+        let rows_left = left_g1.len();
+        let cols_left = left_g1[0].len();
+        let rows_right = right_field.len();
+        let cols_right = right_field[0].len();
+        
+        assert_eq!(cols_left, rows_right, "Matrix dimensions don't match for multiplication");
+        
+        let mut result = vec![vec![G1Projective::zero(); cols_right]; rows_left];
+        
+        for i in 0..rows_left {
+            for j in 0..cols_right {
+                let mut sum = G1Projective::zero();
+                for k in 0..cols_left {
+                    let scaled = left_g1[i][k].mul(right_field[k][j].into_repr());
+                    sum = sum + scaled;
+                }
+                result[i][j] = sum;
+            }
+        }
+        
+        result
+    }
+    
+    fn field_matrix_g1_multiply(&self,left_field: &Matrix,right_g1: &Vec<Vec<G1Projective>>) -> Vec<Vec<G1Projective>> {
+        let rows_left = left_field.len();
+        let cols_left = left_field[0].len();
+        let rows_right = right_g1.len();
+        let cols_right = right_g1[0].len();
+        
+        assert_eq!(cols_left, rows_right, "Matrix dimensions don't match for multiplication");
+        let mut result = vec![vec![G1Projective::zero(); cols_right]; rows_left];
+        for i in 0..rows_left {
+            for j in 0..cols_right {
+                let mut sum = G1Projective::zero();
+                for k in 0..cols_left {
+                    let scaled = right_g1[k][j].mul(left_field[i][k].into_repr());
+                    sum = sum + scaled;
+                }
+                result[i][j] = sum;
+            }
+        }
+        
+        result
+    }
+    
+    fn g1_matrix_field_vector_multiply(&self,matrix_g1: &Vec<Vec<G1Projective>>,vector_field: &Vector) -> Vec<G1Projective> {
+        let rows = matrix_g1.len();
+        let cols = matrix_g1[0].len();
+        
+        assert_eq!(cols, vector_field.len(), "Matrix-vector dimensions don't match");
+        let mut result = vec![G1Projective::zero(); rows];
+        for i in 0..rows {
+            let mut sum = G1Projective::zero();
+            for j in 0..cols {
+                let scaled = matrix_g1[i][j].mul(vector_field[j].into_repr());
+                sum = sum + scaled;
+            }
+            result[i] = sum;
+        }
+        
+        result
+    }
+
+    fn transpose_g1_matrix(&self, matrix: &Vec<Vec<G1Projective>>) -> Vec<Vec<G1Projective>> {
+        if matrix.is_empty() {
+            return Vec::new();
+        }
+        
+        let rows = matrix.len();
+        let cols = matrix[0].len();
+        let mut transposed = vec![vec![G1Projective::zero(); rows]; cols];
+        for i in 0..rows {
+            for j in 0..cols {
+                transposed[j][i] = matrix[i][j];
+            }
+        }
+        
+        transposed
+    }
+    
+    fn transpose_g2_matrix(&self, matrix: &Vec<Vec<G2Projective>>) -> Vec<Vec<G2Projective>> {
+        if matrix.is_empty() {
+            return Vec::new();
+        }
+        
+        let rows = matrix.len();
+        let cols = matrix[0].len();
+        let mut transposed = vec![vec![G2Projective::zero(); rows]; cols];
+        for i in 0..rows {
+            for j in 0..cols {
+                transposed[j][i] = matrix[i][j];
+            }
+        }
+        
+        transposed
+    }
+
+    fn vector_g1_matrix_multiply(&self,vector_field: &Vector,matrix_g1: &Vec<Vec<G1Projective>>) -> Vec<G1Projective> {
+        let vector_len = vector_field.len();
+        let matrix_rows = matrix_g1.len();
+        let matrix_cols = matrix_g1[0].len();
+        
+        assert_eq!(vector_len, matrix_rows, "Vector length must match matrix rows");
+        
+        let mut result = vec![G1Projective::zero(); matrix_cols];
+        for j in 0..matrix_cols {
+            let mut sum = G1Projective::zero();
+            for i in 0..vector_len {
+                let scaled = matrix_g1[i][j].mul(vector_field[i].into_repr());
+                sum = sum + scaled;
+            }
+            result[j] = sum;
+        }
+        
+        result
+    }
+    
+    fn g1_vector_field_vector_dot(&self, g1_vector: &Vec<G1Projective>,field_vector: &Vector) -> G1Projective {
+        assert_eq!(g1_vector.len(), field_vector.len(), "Vectors must have same length");
+        
+        let mut result = G1Projective::zero();
+        
+        for (g1_elem, &field_elem) in g1_vector.iter().zip(field_vector.iter()) {
+            let scaled = g1_elem.mul(field_elem.into_repr());
+            result = result + scaled;
+        }
+        
+        result
+    }
+
+    fn vector_g2_matrix_multiply(&self, vector_field: &Vector,matrix_g2: &Vec<Vec<G2Projective>>) -> Vec<G2Projective> {
+        let vector_len = vector_field.len();
+        let matrix_rows = matrix_g2.len();
+        let matrix_cols = matrix_g2[0].len();
+        
+        assert_eq!(vector_len, matrix_rows, "Vector length must match matrix rows");
+        
+        let mut result = vec![G2Projective::zero(); matrix_cols];
+        
+        for j in 0..matrix_cols {
+            let mut sum = G2Projective::zero();
+            for i in 0..vector_len {
+                let scaled = matrix_g2[i][j].mul(vector_field[i].into_repr());
+                sum = sum + scaled;
+            }
+            result[j] = sum;
+        }
+        
+        result
     }
 }

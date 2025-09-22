@@ -5,11 +5,8 @@ use ark_ff::{Field, PrimeField, Zero, One};
 use ark_ec::ProjectiveCurve;
 
 pub struct IBKEMPublicKey {
-    // pub m_matrix_field: Matrix,
     pub m_matrix: Vec<Vec<G1Projective>>,   
-    // pub z_matrices_field: Vec<Matrix>,     
     pub z_matrices: Vec<Vec<Vec<G1Projective>>>, 
-    // pub z_prime_vectors_field: Vec<Vector>,
     pub z_prime_vectors: Vec<Vec<G1Projective>>,  
 }
 
