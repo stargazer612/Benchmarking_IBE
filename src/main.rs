@@ -38,19 +38,6 @@ fn test_affine_mac() {
     let wrong_message = generate_random_message_128();
     let wrong_verified = mac.verify(&sk, &wrong_message, &tag);
     println!("\n Wrong message verification: {}", if !wrong_verified { "Success" } else { "Failed" });
-
-    // let mac = AffineMAC::new(2, 4);
-    // let sk = mac.gen_mac();
-    // let message = vec![1u8, 0, 1, 1];
-    // let tag = mac.tag(&sk, &message);
-    // let verified = mac.verify(&sk, &message, &tag);
-    
-    // println!("   Affine MAC verification: {}", if verified { "Success" } else { "Failed" });
-    
-    // // Test with wrong message
-    // let wrong_message = vec![0u8, 0, 1, 1];
-    // let wrong_verified = mac.verify(&sk, &wrong_message, &tag);
-    // println!("   Wrong message verification: {}", if !wrong_verified { "Success" } else { "Failed" });
 }
 
 
@@ -60,9 +47,6 @@ fn test_ibkem() {
     let ibkem = IBKEM::new(2, l, 0);
     let (pk, sk) = ibkem.setup();
     println!("IBKEM setup: Success");
-    // let idn= &generate_random_message_128();
-    // println!("message : {:?}", &idn[0..8]);
-    // let identity = idn;
     let identity = b"test@gmail.com";
     let usk1 = ibkem.extract(&sk, identity);
     let (ct1, k1) = ibkem.encrypt(&pk, identity);
@@ -93,15 +77,14 @@ fn test_ibkem() {
     } else {
         println!("\nFailed - Decryption returned");
     }   
-    // println!("\nWrong identity rejection: {}", if wrong_dec.is_none() { "Success" } else { "Failed" });
-
 }
 
 fn test_qanizk() {
     let k = 2;       
-    let lamda = 8;   
+    let lamda = 128;   
     let qanizk = QANIZK::new(k, lamda);
     println!("k={}, lambda={}", k, lamda);
+    
     let m_matrix = <()>::random_matrix(3 * k, k);
     println!("matrix M ({}x{})", 3*k, k);
     
@@ -110,7 +93,9 @@ fn test_qanizk() {
             .map(|&elem| qanizk.group.scalar_mul_p1(elem))
             .collect())
         .collect();
-  
+    
+    println!("m_g1_matrix M({}*{})", m_g1_matrix.len(),m_g1_matrix[0].len());
+    
     println!("Generating CRS...");
     let (crs, _trapdoor) = qanizk.gen_crs(&m_g1_matrix);
     println!("CRS generation: success");
@@ -118,17 +103,17 @@ fn test_qanizk() {
     let tag = b"test_valid_proof";
     let r = <()>::random_vector(k);  
     let c0_field = <()>::matrix_vector_mul(&m_matrix, &r); 
-    
+    println!("c0_field length: {}", c0_field.len());
+
     let c0_g1: Vec<G1Projective> = c0_field.iter()
         .map(|&elem| qanizk.group.scalar_mul_p1(elem))
         .collect();
     
     let pie = qanizk.prove(&crs, tag, &c0_g1, &r);
-    println!("Proof generation: Success");
-
+    println!("Proof generation: success");
     println!("  t1 length: {}", pie.t1_g1.len());
     println!("  u1 length: {}", pie.u1_g1.len());
     
     let is_valid = qanizk.verify(&crs, tag, &c0_g1, &pie);
-    println!("Proof verification: {}", if is_valid { "Success" } else { "Failed" });
+    println!("Proof verification: {}", if is_valid { "success" } else { "failed" });
 }

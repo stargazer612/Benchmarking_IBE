@@ -136,11 +136,8 @@ impl IBKEM {
             .collect();
     
         let pk = IBKEMPublicKey {
-            // m_matrix_field: m_matrix.clone(),
             m_matrix: m_g1,
-            // z_matrices_field: z_matrices.clone(),
             z_matrices: z_matrices_g1,
-            // z_prime_vectors_field: z_prime_vectors.clone(),
             z_prime_vectors: z_prime_vectors_g1,
         };
 
@@ -169,7 +166,6 @@ impl IBKEM {
             }
         }
 
-        // let l_prime = 0;
         for i in 0..=self.l_prime {
             let fi_prime = self.mac.f_prime_i(i, identity);
             if !fi_prime.is_zero() {
@@ -188,58 +184,6 @@ impl IBKEM {
             v_g2,
         }
     }
-
-    // pub fn encrypt(&self, pk: &IBKEMPublicKey, identity: &[u8]) -> (IBKEMCiphertext, GTElement) {
-    //     let r = <()>::random_vector(self.k);
-        
-    //     let c0_field = <()>::matrix_vector_mul(&pk.m_matrix_field, &r);
-    //     let c0_g1: Vec<G1Projective> = c0_field.iter()
-    //         .map(|&element| self.group.scalar_mul_p1(element))
-    //         .collect();
-        
-        
-    //     let n = pk.z_matrices_field[0].len(); 
-    //     let mut z_i_sum = vec![vec![FieldElement::zero(); self.k]; n];
-        
-    //     // print!("\nEnc f_i = ");
-    //     for i in 0..=(2*self.l + 1) {
-    //         let fi = self.mac.f_i(i, identity);
-    //         if !fi.is_zero() {
-    //             // print!("{} ", i);
-    //             for row in 0..n {
-    //                 for col in 0..self.k {
-    //                     z_i_sum[row][col] += fi * pk.z_matrices_field[i][row][col];
-    //                 }
-    //             }
-    //         }
-    //     }
-        
-    //     let c1_field = <()>::matrix_vector_mul(&z_i_sum, &r);
-        
-    //     let c1_g1: Vec<G1Projective> = c1_field.iter()
-    //         .map(|&element| self.group.scalar_mul_p1(element))
-    //         .collect();
-        
-    //     // key encapsulation
-    //     let mut k_field = FieldElement::zero();
-        
-    //     let l_prime = 0; 
-    //     for i in 0..=l_prime {
-    //         let fi_prime = self.mac.f_prime_i(i, identity);
-    //         if !fi_prime.is_zero() {
-    //             let zi_prime_dot_r: FieldElement = pk.z_prime_vectors_field[i].iter()
-    //                 .zip(r.iter())
-    //                 .map(|(&zi, &ri)| zi * ri)
-    //                 .fold(FieldElement::zero(), |acc, x| acc + x);
-    //             k_field += fi_prime * zi_prime_dot_r;
-    //         }
-    //     }
-        
-    //     let k_gt = self.group.scalar_expo_gt(k_field);
-
-    //     let ciphertext = IBKEMCiphertext { c0_g1, c1_g1 };
-    //     (ciphertext, k_gt)
-    // }
 
     pub fn encrypt(&self, pk: &IBKEMPublicKey, identity: &[u8]) -> (IBKEMCiphertext, GTElement) {
         let r = <()>::random_vector(self.k);
@@ -262,9 +206,6 @@ impl IBKEM {
         
         let c1_g1 = <()>::group_matrix_vector_mul_msm(&z_i_sum, &r);
         
-
-        // let mut k_field = FieldElement::zero();
-        // let l_prime = 0; 
         let mut pairing_pairs = Vec::new();
 
         for i in 0..=self.l_prime {
@@ -275,14 +216,9 @@ impl IBKEM {
                 for (g1_elem, &r_elem) in pk.z_prime_vectors[i].iter().zip(r.iter()){
                     zi_prime_dot_r += g1_elem.mul(r_elem.into_repr());
                 }
+                
                 // fi * (zi_prime*r)
                 let scaling = zi_prime_dot_r.mul(fi_prime.into_repr()); 
-                // let zi_prime_dot_r: FieldElement = pk.z_prime_vectors_field[i].iter()
-                //     .zip(r.iter())
-                //     .map(|(&zi, &ri)| zi * ri)
-                //     .fold(FieldElement::zero(), |acc, x| acc + x);
-                // k_field += fi_prime * zi_prime_dot_r;
-
                 pairing_pairs.push((scaling,self.group.p2.clone()));
             }
         }

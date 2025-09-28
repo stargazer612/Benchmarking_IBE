@@ -79,6 +79,9 @@ pub trait FieldUtils {
     fn vector_g1_matrix_multiply(&self,vector_field: &Vector,matrix_g1: &Vec<Vec<G1Projective>>) -> Vec<G1Projective>;
     fn g1_vector_field_vector_dot(&self,g1_vector: &Vec<G1Projective>,field_vector: &Vector) -> G1Projective;
     fn vector_g2_matrix_multiply(&self,vector_field: &Vector,matrix_g2: &Vec<Vec<G2Projective>>) -> Vec<G2Projective>;
+    fn vector_to_row_matrix(&self, vector: &Vector) -> Matrix;
+    fn g1_vector_to_row_matrix(&self, vector: &[G1Projective]) -> Vec<Vec<G1Projective>>;
+    fn g2_vector_to_row_matrix(&self, vector: &[G2Projective]) -> Vec<Vec<G2Projective>>;
 }
 
 impl FieldUtils for () {
@@ -335,5 +338,20 @@ impl FieldUtils for () {
         }
         
         result
+    }
+
+    // Convert a vector into a 1×l row matrix (1 row, l columns)
+    fn vector_to_row_matrix(&self, vector: &Vector) -> Matrix {
+        vec![vector.clone()]
+    }
+
+    // Convert a G1 vector into a 1×l row matrix
+    fn g1_vector_to_row_matrix(&self, vector: &[G1Projective]) -> Vec<Vec<G1Projective>> {
+        vec![vector.to_vec()]
+    }
+
+    // Convert a G2 vector into a 1×l row matrix
+    fn g2_vector_to_row_matrix(&self, vector: &[G2Projective]) -> Vec<Vec<G2Projective>> {
+        vec![vector.to_vec()]
     }
 }
