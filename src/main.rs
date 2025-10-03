@@ -12,11 +12,16 @@ fn main() {
     println!("Testing Affine MAC"); 
     test_affine_mac();
     
-    println!("Testing IBKEM");
-    test_ibkem();    
+    println!("Testing IBKEM1");
+    test_ibkem1();
 
     println!("\nTesting QANIZK");
     test_qanizk();
+
+    println!("Testing IBKEM2");
+    test_ibkem2();    
+
+    
 }
 
 fn test_affine_mac() {
@@ -41,7 +46,7 @@ fn test_affine_mac() {
 }
 
 
-fn test_ibkem() {
+fn test_ibkem1() {
     let m_len = 128;
     let l = 2 * m_len + 1;
     let ibkem = IBKEM::new(2, l, 0);
@@ -78,6 +83,58 @@ fn test_ibkem() {
         println!("\nFailed - Decryption returned");
     }   
 }
+
+fn test_ibkem2() {
+    let m_len = 128; 
+    let l = 2 * m_len + 1;
+    let lambda = 128; 
+    let k = 2;
+    
+    println!("Setting up IBKEM2 with parameters: k={}, l={}, lambda={}", k, l, lambda);
+    
+    let ibkem2 = IBKEM::new_ibkem2(k, l, 0, lambda); 
+    let (pk, sk) = ibkem2.setup2(); 
+
+    println!("IBKEM2 setup: Success");
+    println!("Public key has CRS: {}", pk.crs.is_some());
+
+    let identity = b"test@gmail.com";
+    
+    let usk1 = ibkem2.extract(&sk, identity);
+    
+    let (ct, k1) = ibkem2.encrypt2(&pk, identity);
+    println!("IBKEM2 encryption: Success");
+    println!("Ciphertext has proof: {}", ct.proof.is_some());
+    
+    println!("Decryption...");
+    let k1_dec = ibkem2.decrypt2(&pk, &usk1, identity, &ct); 
+
+    // Test correctness
+    if let Some(decrypted_key) = k1_dec {
+        if decrypted_key == k1 {
+            println!("Success - Keys match!");
+        } else {
+            println!("Failed - Keys don't match");
+        }
+    } else {
+        println!("Failed - Decryption returned None");
+        return;
+    }
+
+    // Testing with wrong identity
+    println!("\nTesting with wrong identity...");
+    let identity2 = b"harshit@gmail.com";
+    let usk2 = ibkem2.extract(&sk, identity2);
+    
+    let wrong_dec = ibkem2.decrypt2(&pk, &usk2, identity2, &ct);
+    
+    if wrong_dec.is_none() {
+        println!("Success - Keys don't match!");
+    } else {
+        println!("Failed - Key match!");
+    }
+}
+
 
 fn test_qanizk() {
     let k = 2;       
