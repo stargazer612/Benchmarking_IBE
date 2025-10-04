@@ -1,27 +1,18 @@
-use ark_ec::{PairingEngine, ProjectiveCurve};
-use ark_bls12_381::{Bls12_381, Fr, G1Projective, G2Projective};
-use ark_ff::{PrimeField, UniformRand, Zero, One, BigInteger256, BigInteger};
-use rand::thread_rng;
+use ark_bls12_381::G1Projective;
 use ibe_schemes::*;
 
-fn generate_random_message_128() -> Vec<u8> {
-    (0..16).map(|_| rand::random::<u8>()).collect()
-}
-
 fn main() {
-    println!("Testing Affine MAC"); 
+    println!("\nTesting Affine MAC"); 
     test_affine_mac();
     
-    println!("Testing IBKEM1");
+    println!("\n\nTesting IBKEM1");
     test_ibkem1();
 
-    println!("\nTesting QANIZK");
+    println!("\n\nTesting QANIZK");
     test_qanizk();
 
-    println!("Testing IBKEM2");
+    println!("\n\nTesting IBKEM2");
     test_ibkem2();    
-
-    
 }
 
 fn test_affine_mac() {
@@ -32,7 +23,11 @@ fn test_affine_mac() {
     let sk = mac.gen_mac();
 
     let message = generate_random_message_128();
-    println!("Random Message: {:?}", &message[0..8]);
+    println!("Random Message: {:?}", &message);
+    let message = generate_random_message_128();
+    println!("Message length: {} bytes = {} bits", message.len(), message.len() * 8);
+
+
     
     let tag = mac.tag(&sk, &message);
     let verified = mac.verify(&sk, &message, &tag);
@@ -51,11 +46,18 @@ fn test_ibkem1() {
     let l = 2 * m_len + 1;
     let ibkem = IBKEM::new(2, l, 0);
     let (pk, sk) = ibkem.setup();
-    println!("IBKEM setup: Success");
-    let identity = b"test@gmail.com";
-    let usk1 = ibkem.extract(&sk, identity);
-    let (ct1, k1) = ibkem.encrypt(&pk, identity);
-    let k1_dec = ibkem.decrypt(&usk1, identity, &ct1);
+    println!("\nIBKEM setup: Success");
+
+    let (email, identity) = generate_email_and_hash_identity(128);
+    let email_str = String::from_utf8_lossy(&email);    
+    println!("  Email: {}", email_str);
+    println!("  Identity: {:?}", identity);
+    println!("  Identity Length: {} bytes", identity.len());
+
+    // let identity = b"test@gmail.com";
+    let usk1 = ibkem.extract(&sk, &identity);
+    let (ct1, k1) = ibkem.encrypt(&pk, &identity);
+    let k1_dec = ibkem.decrypt(&usk1, &identity, &ct1);
     println!("IBKEM encryption/decryption: {}", if k1_dec.is_some() { "Success" } else { "Failed" });
     
 
@@ -70,9 +72,13 @@ fn test_ibkem1() {
     }   
 
     // Test with different identity
-    let identity2 = b"harshit@gmail.com";
-    let usk2 = ibkem.extract(&sk, identity2);
-    let wrong_dec = ibkem.decrypt(&usk2, identity2, &ct1);
+    // let identity2 = b"harshit@gmail.com";
+    let (email2, identity2) = generate_email_and_hash_identity(128);
+    let email_str2 = String::from_utf8_lossy(&email2);    
+    println!("   Email2: {}", email_str2);
+    println!("   Identity2: {:?}", identity2);
+    let usk2 = ibkem.extract(&sk, &identity2);
+    let wrong_dec = ibkem.decrypt(&usk2, &identity2, &ct1);
     if let Some(decrypted_key) = wrong_dec {
         if decrypted_key == k1 {
             println!("\nSuccess - Keys match on different identity!");
@@ -98,16 +104,20 @@ fn test_ibkem2() {
     println!("IBKEM2 setup: Success");
     println!("Public key has CRS: {}", pk.crs.is_some());
 
-    let identity = b"test@gmail.com";
+    // let identity = b"test@gmail.com";
+    let (email, identity) = generate_email_and_hash_identity(128);
+    let email_str = String::from_utf8_lossy(&email);    
+    println!("   Email: {}", email_str);
+    println!("   Identity: {:?}", identity);
     
-    let usk1 = ibkem2.extract(&sk, identity);
+    let usk1 = ibkem2.extract(&sk, &identity);
     
-    let (ct, k1) = ibkem2.encrypt2(&pk, identity);
+    let (ct, k1) = ibkem2.encrypt2(&pk, &identity);
     println!("IBKEM2 encryption: Success");
     println!("Ciphertext has proof: {}", ct.proof.is_some());
     
-    println!("Decryption...");
-    let k1_dec = ibkem2.decrypt2(&pk, &usk1, identity, &ct); 
+    println!("\nDecryption...");
+    let k1_dec = ibkem2.decrypt2(&pk, &usk1, &identity, &ct); 
 
     // Test correctness
     if let Some(decrypted_key) = k1_dec {
@@ -123,10 +133,15 @@ fn test_ibkem2() {
 
     // Testing with wrong identity
     println!("\nTesting with wrong identity...");
-    let identity2 = b"harshit@gmail.com";
-    let usk2 = ibkem2.extract(&sk, identity2);
+    // let identity2 = b"harshit@gmail.com";
+    let (email2, identity2) = generate_email_and_hash_identity(128);
+    let email_str2 = String::from_utf8_lossy(&email2);    
+    println!("   Email2: {}", email_str2);
+    println!("   Identity2: {:?}", identity2);
+
+    let usk2 = ibkem2.extract(&sk, &identity2);
     
-    let wrong_dec = ibkem2.decrypt2(&pk, &usk2, identity2, &ct);
+    let wrong_dec = ibkem2.decrypt2(&pk, &usk2, &identity2, &ct);
     
     if wrong_dec.is_none() {
         println!("Success - Keys don't match!");

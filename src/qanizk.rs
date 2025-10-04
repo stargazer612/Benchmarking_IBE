@@ -1,10 +1,7 @@
-use core::hash;
-
 use crate::common::*;
 use ark_bls12_381::{G1Projective, G2Projective};
-use ark_ff::{Field, PrimeField, Zero, One, BigInteger};
+use ark_ff::{PrimeField, Zero, One, BigInteger};
 use ark_ec::ProjectiveCurve;
-use blake3;
 
 pub struct CRS {
     pub a_g2: Vec<Vec<G2Projective>>,
@@ -118,24 +115,6 @@ impl QANIZK {
         
         (crs, trapdoor)
     }
-
-    fn blake3_hash_to_bits(&self, input: &[u8]) -> Vec<usize> {
-        let hash = blake3::hash(input);
-        let hash_bytes = hash.as_bytes();
-        
-        let mut bits = Vec::new();
-        for i in 0..self.lamda {
-            let byte_idx = i / 8;
-            let bit_idx = i % 8;
-            if byte_idx < hash_bytes.len() {
-                let bit = (hash_bytes[byte_idx] >> bit_idx) & 1;
-                bits.push(bit as usize);
-            } else {
-                bits.push(0);
-            }
-        }
-        bits
-    }
     
     fn hash_tag_c0_t1(&self, tag: &[u8], c0_g1: &[G1Projective], t1: &[G1Projective]) -> Vec<u8> {
         let mut input = Vec::new();
@@ -196,7 +175,7 @@ impl QANIZK {
         let t1_g1 = <()>::group_matrix_vector_mul_msm(&crs.b_g1, &s);
         println!("t1_g1 : {}",t1_g1.len());
         let hash_input = self.hash_tag_c0_t1(tag, c0_g1, &t1_g1);
-        let tau = self.blake3_hash_to_bits(&hash_input);
+        let tau = blake3_hash_to_bits(&hash_input, self.lamda);
         println!("mk_g1 : {} * {}", crs.mk_g1.len(), crs.mk_g1[0].len());
         
         println!("r length: {}",r.len());
@@ -225,7 +204,7 @@ impl QANIZK {
         }
 
         if !kjb_a_g2.is_empty() && !kjb_a_g2[0].is_empty() {
-            println!("kjb_a_g2[0] has {} matrices (should be 2 for b∈{{0,1}})", kjb_a_g2[0].len());
+            println!("kjb_a_g2[0] has {} matrices", kjb_a_g2[0].len());
             if !kjb_a_g2[0][0].is_empty() {
                 println!("Each matrix is {}×{}", kjb_a_g2[0][0].len(), kjb_a_g2[0][0][0].len());
             }
@@ -268,7 +247,7 @@ impl QANIZK {
         println!("crs.ka_g2: {}×{}", crs.ka_g2.len(), crs.ka_g2[0].len());
         
         let hash_input = self.hash_tag_c0_t1(tag, c0_g1, t1_g1);
-        let tau = self.blake3_hash_to_bits(&hash_input);
+        let tau = blake3_hash_to_bits(&hash_input, self.lamda);
         if u1_g1.len() != self.k + 1 {
             println!("ERROR: u1_g1 length {} != k+1 = {}", u1_g1.len(), self.k + 1);
             return false;

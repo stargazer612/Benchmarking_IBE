@@ -172,7 +172,7 @@ impl IBKEM {
 
     // IBKEM2 setup
     pub fn setup2(&self) -> (IBKEMPublicKey, IBKEMSecretKey) {
-        println!("IBKEM2 Setup (CCA-secure):");
+        println!("IBKEM2 Setup:");
         
         let (mut pk, sk) = self.setup();
         
