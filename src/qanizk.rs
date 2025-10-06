@@ -171,7 +171,6 @@ impl QANIZK {
     
     pub fn prove(&self, crs: &CRS, tag: &[u8], c0_g1: &Vec<G1Projective>, r: &Vector) -> QANIZKProof {
         let s = <()>::random_vector(self.k);
-        println!("\n1");
         let t1_g1 = <()>::group_matrix_vector_mul_msm(&crs.b_g1, &s);
         println!("t1_g1 : {}",t1_g1.len());
         let hash_input = self.hash_tag_c0_t1(tag, c0_g1, &t1_g1);
@@ -219,7 +218,7 @@ impl QANIZK {
         
         for j in 0..lambda {
             let tau_j = tau[j];
-            println!("j={}, tau[{}] = {}", j, j, tau_j);
+            // println!("j={}, tau[{}] = {}", j, j, tau_j);
             assert!(tau_j <= 1, "tau values must be 0 or 1");
             
             let kj_tauj_a = &kjb_a_g2[j][tau_j];
@@ -267,12 +266,11 @@ impl QANIZK {
         let k_tau_a = self.compute_k_tau_a_from_crs(&crs.kjb_a_g2, &tau);
         println!("K_tau A dimensions: {}×{}", k_tau_a.len(), if k_tau_a.is_empty() { 0 } else { k_tau_a[0].len() });
 
-        let dimensions_consistent = 
-        u1_g1.len() == self.k + 1 &&
-        t1_g1.len() == self.k &&
-        c0_g1.len() == crs.ka_g2.len() &&
-        crs.a_g2.len() == self.k + 1 &&
-        crs.a_g2[0].len() == self.k;
+        let dimensions_consistent = u1_g1.len() == self.k + 1 &&
+                                            t1_g1.len() == self.k &&
+                                            c0_g1.len() == crs.ka_g2.len() &&
+                                            crs.a_g2.len() == self.k + 1 &&
+                                            crs.a_g2[0].len() == self.k;
     
         if !dimensions_consistent {
             println!("Dimension are not matching!");
@@ -345,8 +343,8 @@ impl QANIZK {
             println!("QANIZK verification: success");
         } else {
             println!("QANIZK verification: failed - pairing equation not satisfied");
-            println!("Result: {:?}", result_gt);
-            println!("Expected: {:?}", one_gt);
+            // println!("Result: {:?}", result_gt);
+            // println!("Expected: {:?}", one_gt);
         }
         
         is_valid        
