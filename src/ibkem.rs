@@ -176,7 +176,7 @@ impl IBKEM {
         
         let (mut pk, sk) = self.setup();
         
-        if let Some(ref qanizk) = self.qanizk {
+        if let Some(qanizk) = &self.qanizk {
             println!("Generating CRS for IBKEM2...");
             let (crs, _trapdoor) = qanizk.gen_crs(&pk.m_matrix);
             pk.crs = Some(crs);
