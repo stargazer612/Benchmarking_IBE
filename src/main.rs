@@ -7,7 +7,7 @@ fn main() {
     
     println!("\n\nTesting IBKEM1");
     test_ibkem1();
-
+    
     println!("\n\nTesting QANIZK");
     test_qanizk();
 
@@ -55,7 +55,6 @@ fn test_ibkem1() {
     println!("  Identity: {:?}", identity);
     println!("  Identity Length: {} bytes", identity.len());
 
-    // let identity = b"test@gmail.com";
     let usk1 = ibkem.extract(&sk, &identity);
     let (ct1, k1) = ibkem.encrypt(&pk, &identity);
     let k1_dec = ibkem.decrypt(&usk1, &identity, &ct1);
@@ -73,7 +72,6 @@ fn test_ibkem1() {
     }   
 
     // Test with different identity
-    // let identity2 = b"harshit@gmail.com";
     let (email2, identity2) = generate_email_and_hash_identity(128);
     let email_str2 = String::from_utf8_lossy(&email2);    
     println!("   Email2: {}", email_str2);
@@ -144,7 +142,6 @@ fn test_ibkem2() {
     println!("IBKEM2 setup: Success");
     println!("Public key has CRS: {}", pk.crs.is_some());
 
-    // let identity = b"test@gmail.com";
     let (email, identity) = generate_email_and_hash_identity(128);
     let email_str = String::from_utf8_lossy(&email);    
     println!("   Email: {}", email_str);
@@ -173,7 +170,6 @@ fn test_ibkem2() {
 
     // Testing with wrong identity
     println!("\nTesting with wrong identity...");
-    // let identity2 = b"harshit@gmail.com";
     let (email2, identity2) = generate_email_and_hash_identity(128);
     let email_str2 = String::from_utf8_lossy(&email2);    
     println!("   Email2: {}", email_str2);

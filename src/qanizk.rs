@@ -1,7 +1,7 @@
 use crate::common::*;
-use ark_bls12_381::{G1Projective, G2Projective};
+use ark_bls12_381::{G1Projective, G2Projective, G1Affine};
 use ark_ff::{PrimeField, Zero, One, BigInteger};
-use ark_ec::ProjectiveCurve;
+use ark_ec::{ProjectiveCurve,msm::VariableBaseMSM};
 
 pub struct CRS {
     pub a_g2: Vec<Vec<G2Projective>>,
@@ -60,7 +60,7 @@ impl QANIZK {
                 .map(|&element| self.group.scalar_mul_p1(element))
                 .collect())
             .collect();
-        
+
         println!("m1_matrix : {}*{}",m1_matrix.len(), m1_matrix[0].len());
         let m_transpose_matrix = ().transpose_g1_matrix(&m1_matrix);
         println!("m_transpose_matrix : {}*{}",m_transpose_matrix.len(), m_transpose_matrix[0].len());
@@ -103,7 +103,7 @@ impl QANIZK {
             kjb_a_g2.push(kjb_row_a);
             b_kjb_g1.push(b_kjb_row);
         }
-        
+
         let crs = CRS { a_g2,
                              ka_g2,
                              b_g1 , 
@@ -134,62 +134,57 @@ impl QANIZK {
         input
     }
 
-    pub fn compute_b_k_tau_from_crs(&self, b_kjb_g1: &Vec<Vec<Vec<Vec<G1Projective>>>>,tau: &Vec<usize>) -> Vec<Vec<G1Projective>> {
+    pub fn compute_s_times_b_k_tau(&self, s: &Vector, b_kjb_g1: &Vec<Vec<Vec<Vec<G1Projective>>>>, tau: &Vec<usize>) -> Vec<G1Projective> {
         let lambda = tau.len();
-        assert_eq!(b_kjb_g1.len(), lambda, "b_kjb_g1 length must match tau length");
-        
-        if lambda == 0 {
-            return vec![vec![G1Projective::zero()]];
-        }
-        
-        let rows = b_kjb_g1[0][0].len();
         let cols = b_kjb_g1[0][0][0].len();
         
-        let mut b_k_tau = vec![vec![G1Projective::zero(); cols]; rows];
+        let mut result = vec![G1Projective::zero(); cols];
         
-        for j in 0..lambda {
-            let tau_j = tau[j];
-            assert!(tau_j <= 1, "tau values must be 0 or 1");
+        for col in 0..cols {
+            let mut bases = Vec::new();
+            let mut scalars = Vec::new();
             
-            let b_kj_tauj = &b_kjb_g1[j][tau_j];
-            
-            for row in 0..rows {
-                for col in 0..cols {
-                    b_k_tau[row][col] = b_k_tau[row][col] + b_kj_tauj[row][col];
+            for j in 0..lambda {
+                let tau_j = tau[j];
+                for row in 0..s.len() {
+                    bases.push(b_kjb_g1[j][tau_j][row][col]);
+                    scalars.push(s[row]);
                 }
             }
+            
+            let bases_affine: Vec<G1Affine> = bases.iter().map(|g| g.into_affine()).collect();
+            let scalars_repr: Vec<_> = scalars.iter().map(|s| s.into_repr()).collect();
+            result[col] = VariableBaseMSM::multi_scalar_mul(&bases_affine, &scalars_repr);
         }
         
-        b_k_tau
+        result
     }
-    
-    pub fn compute_s_times_b_k_tau(&self, s: &Vector, b_kjb_g1: &Vec<Vec<Vec<Vec<G1Projective>>>>,tau: &Vec<usize>) -> Vec<G1Projective> {        
-        let b_k_tau = self.compute_b_k_tau_from_crs(b_kjb_g1, tau);
-        
-        ().vector_g1_matrix_multiply(s, &b_k_tau)
-    }
+
     
     pub fn prove(&self, crs: &CRS, tag: &[u8], c0_g1: &Vec<G1Projective>, r: &Vector) -> QANIZKProof {
         let s = <()>::random_vector(self.k);
         let t1_g1 = <()>::group_matrix_vector_mul_msm(&crs.b_g1, &s);
+
         println!("t1_g1 : {}",t1_g1.len());
+
         let hash_input = self.hash_tag_c0_t1(tag, c0_g1, &t1_g1);
         let tau = blake3_hash_to_bits(&hash_input, self.lamda);
         println!("mk_g1 : {} * {}", crs.mk_g1.len(), crs.mk_g1[0].len());
         
         println!("r length: {}",r.len());
-        let r_mk = ().vector_g1_matrix_multiply(r, &crs.mk_g1);
-        println!("r_mk length: {}", r_mk.len());
         
+        let mk_g1_transpose = ().transpose_g1_matrix(&crs.mk_g1);
+        let r_mk = <()>::group_matrix_vector_mul_msm(&mk_g1_transpose, &r);        
         let s_b_k_tau = self.compute_s_times_b_k_tau(&s, &crs.b_kjb_g1, &tau);
+
         let u1_g1: Vec<G1Projective> = r_mk.iter().zip(s_b_k_tau.iter())
             .map(|(a, b)| *a + *b)
             .collect();
         println!("u1_g1 : {}",u1_g1.len());
+        
         QANIZKProof { t1_g1, u1_g1 }
     }
 
-    
     fn compute_k_tau_a_from_crs(&self, kjb_a_g2: &[Vec<Vec<Vec<G2Projective>>>], tau: &[usize]) -> Vec<Vec<G2Projective>> {
         println!("kjb_a_g2 structure: {} (should be lambda)", kjb_a_g2.len());
         println!("tau length: {} (should be lambda)", tau.len());
@@ -218,7 +213,6 @@ impl QANIZK {
         
         for j in 0..lambda {
             let tau_j = tau[j];
-            // println!("j={}, tau[{}] = {}", j, j, tau_j);
             assert!(tau_j <= 1, "tau values must be 0 or 1");
             
             let kj_tauj_a = &kjb_a_g2[j][tau_j];
@@ -247,6 +241,7 @@ impl QANIZK {
         
         let hash_input = self.hash_tag_c0_t1(tag, c0_g1, t1_g1);
         let tau = blake3_hash_to_bits(&hash_input, self.lamda);
+
         if u1_g1.len() != self.k + 1 {
             println!("ERROR: u1_g1 length {} != k+1 = {}", u1_g1.len(), self.k + 1);
             return false;

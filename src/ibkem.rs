@@ -69,7 +69,7 @@ impl IBKEM {
         println!("  k = {}", self.k);
         println!("  eta (2*k) = {}", self.eta);
         println!("  l  = {}", self.l);
-        print!(" l' = {}", self.l_prime);
+        println!("  l' = {}", self.l_prime);
         
         let m_matrix = <()>::random_matrix(self.k + self.eta, self.k);
         println!("  M matrix dimensions: {} × {}", m_matrix.len(), m_matrix[0].len());
@@ -84,19 +84,9 @@ impl IBKEM {
         let mut z_matrices = Vec::new();
         
         for i in 0..=self.l {    
-            //n=k and eta=2*k
-            let y_i = <()>::random_matrix(self.k, self.k); // k * n; 
-            
+            let y_i = <()>::random_matrix(self.k, self.k);  
             let y_i_transposed = ().transpose_matrix(&y_i);
             let x_i_transposed = ().transpose_matrix(&mac_sk.x_matrices[i]);
-            // let x_i_transposed = &mac_sk.x_matrices[i];
-            
-            // println!("i={}, k={}, eta={}", i, self.k, self.eta);
-            // println!("y_i dimensions: {} rows × {} cols", y_i.len(), y_i[0].len());
-            // println!("y_i_transposed dimensions: {} rows × {} cols", y_i_transposed.len(), y_i_transposed[0].len());
-            // println!("x_i dimensions: {} rows × {} cols", mac_sk.x_matrices[i].len(), mac_sk.x_matrices[i][0].len());
-            // println!("x_i_transposed dimensions: {} rows × {} cols", x_i_transposed.len(), x_i_transposed[0].len());
-
             let combined = ().concatenate_matrices(&y_i_transposed, &x_i_transposed);
             let z_i = ().matrix_multiply(&combined,&m_matrix);    
             
@@ -111,14 +101,7 @@ impl IBKEM {
         
         for i in 0..=self.l_prime {
             let y_prime_i = <()>::random_vector(self.k);
-            
-            // println!("y_prime_i.len() = {}", y_prime_i.len());
-            // println!("x_prime.len() = {}", mac_sk.x_prime.len());
-            // println!("m_matrix: row = {} and col = {} ", m_matrix.len(), m_matrix[0].len());        
-            
             let combined = ().concatenate_vectors(&y_prime_i, &mac_sk.x_prime[i]);
-
-            // println!("combined length of vectors = {}", combined.len());
 
             assert_eq!(combined.len(), m_matrix.len(), "error :dimension mismatch");
 
@@ -190,14 +173,11 @@ impl IBKEM {
 
     pub fn extract(&self, sk: &IBKEMSecretKey, identity: &[u8]) -> IBKEMUserSecretKey {
         let tag = self.mac.tag(&sk.mac_sk, identity);
-
         let mut v_field: Vector = vec![FieldElement::zero(); self.k];
 
-        // print!("\nExt f_i = ");
         for i in 0..=self.l {
             let fi = self.mac.f_i(i, identity);
             if !fi.is_zero() {
-                // print!("{} ",i);
                 let yi_t = <()>::matrix_vector_mul(&sk.y_matrices[i], &tag.t_field);
                 let scaled = <()>::scalar_vector_mul(fi, &yi_t);
                 v_field = <()>::vector_add(&v_field, &scaled);
@@ -225,7 +205,6 @@ impl IBKEM {
 
     pub fn encrypt(&self, pk: &IBKEMPublicKey, identity: &[u8]) -> (IBKEMCiphertext, GTElement) {
         let r = <()>::random_vector(self.k);
-        
         let c0_g1 = <()>::group_matrix_vector_mul_msm(&pk.m_matrix, &r);
  
         let n = pk.z_matrices[0].len();  
@@ -249,19 +228,15 @@ impl IBKEM {
         for i in 0..=self.l_prime {
             let fi_prime = self.mac.f_prime_i(i, identity);
             if !fi_prime.is_zero() {
-                
                 let mut zi_prime_dot_r = G1Projective::zero();
                 for (g1_elem, &r_elem) in pk.z_prime_vectors[i].iter().zip(r.iter()){
                     zi_prime_dot_r += g1_elem.mul(r_elem.into_repr());
                 }
-                
-                // fi * (zi_prime*r)
                 let scaling = zi_prime_dot_r.mul(fi_prime.into_repr()); 
                 pairing_pairs.push((scaling,self.group.p2.clone()));
             }
         }
         
-        // let k_gt = self.group.scalar_expo_gt(k_field);
         let k_gt= if pairing_pairs.is_empty() { 
             GTElement::one()
         } else {
@@ -279,9 +254,7 @@ impl IBKEM {
     // IBKEM2 encryption
     pub fn encrypt2(&self, pk: &IBKEMPublicKey, identity: &[u8]) -> (IBKEMCiphertext, GTElement) {
         println!("IBKEM2 Encrypt for identity: {:?}", identity);
-        
         let r = <()>::random_vector(self.k);
-        
         let c0_g1 = <()>::group_matrix_vector_mul_msm(&pk.m_matrix, &r);
         
         let n = pk.z_matrices[0].len();
@@ -328,7 +301,6 @@ impl IBKEM {
 
         if let (Some(qanizk), Some(crs)) = (&self.qanizk, &pk.crs) {
             println!("Generating QANIZK proof...");
-            
             // tag (identity || c0)
             let mut tag = Vec::new();
             tag.extend_from_slice(identity);
@@ -349,7 +321,6 @@ impl IBKEM {
 
 
     pub fn decrypt(&self, usk: &IBKEMUserSecretKey, _identity: &[u8], ciphertext: &IBKEMCiphertext) -> Option<GTElement> {
-        
         let mut w_g2 = usk.v_g2.clone();
         w_g2.extend_from_slice(&usk.u_g2);
 
@@ -372,7 +343,6 @@ impl IBKEM {
         let result2 = self.group.multi_pairing(&second_term);
 
         // K = first_term - second_term = result1 * result2^(-1)
-        
         let inverse_exist = result2.inverse();
         if let Some(neg_inv) = inverse_exist {
             Some(result1*neg_inv)
@@ -385,10 +355,8 @@ impl IBKEM {
     // IBKEM2 decrypt
     pub fn decrypt2(&self, pk: &IBKEMPublicKey, usk: &IBKEMUserSecretKey, identity: &[u8], ciphertext: &IBKEMCiphertext) -> Option<GTElement> {
         println!("IBKEM2 Decrypt for identity: {:?}", identity);
-        
         if let (Some(qanizk), Some(crs), Some(proof)) = (&self.qanizk, &pk.crs, &ciphertext.proof) {
             println!("Verifying QANIZK proof...");
-            
             // tag (identity || c0)
             let mut tag = Vec::new();
             tag.extend_from_slice(identity);
@@ -397,12 +365,10 @@ impl IBKEM {
                 tag.extend_from_slice(&affine.x.into_repr().to_bytes_le());
                 tag.extend_from_slice(&affine.y.into_repr().to_bytes_le());
             }
-            
             if !qanizk.verify(crs, &tag, &ciphertext.c0_g1, proof) {
                 println!("QANIZK proof verification failed!");
                 return None; 
             }
-            
             println!("QANIZK proof verification succeeded!");
         }
         
@@ -437,23 +403,3 @@ impl IBKEM {
     }
 
 }
-
-
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-
-//     #[test]
-//     fn test_ibkem_basic() {
-//         let m_len = 128;
-//         let l = 2*m_len + 1;
-//         let ibkem = IBKEM::new(2, l, 0);
-//         let (pk, sk) = ibkem.setup();
-//         let identity = b"bob@yahoo.com";
-//         let usk1 = ibkem.extract(&sk, identity);
-//         let (ct1, _k1) = ibkem.encrypt(&pk, identity);
-//         let k1_dec = ibkem.decrypt(&usk1, identity, &ct1);
-//         assert!(k1_dec.is_some(), "IBKEM1 decryption should succeed");
-//     }
-
-// }
