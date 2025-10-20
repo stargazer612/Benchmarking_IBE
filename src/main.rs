@@ -95,7 +95,7 @@ fn common_runtimes() {
     let matrix_for_vec = <()>::random_matrix(vec_size, vec_size);
     let start = Instant::now();
     let _ = <()>::matrix_vector_mul(&matrix_for_vec, &vec1);
-    println!("matrix_vector_mul ({}x{} * vec): {:?}", vec_size, vec_size, start.elapsed());
+    println!("matrix_vector_mul ({}x{}): {:?}", vec_size, vec_size, start.elapsed());
     
     let matrix2 = <()>::random_matrix(matrix_size, matrix_size);
     let start = Instant::now();
