@@ -2,14 +2,11 @@ use ark_bls12_381::G1Projective;
 use ibe_schemes::*;
 
 #[test]
-fn test_qanizk() {
+fn qanizk_ok() {
     let k = 2;
-    let lamda = 128;
-    let qanizk = QANIZK::new(k, lamda);
-    println!("k={}, lambda={}", k, lamda);
-
+    let lambda = 128;
+    let qanizk = QANIZK::new(k, lambda);
     let m_matrix = <()>::random_matrix(3 * k, k);
-    println!("matrix M ({}x{})", 3 * k, k);
 
     let m_g1_matrix: Vec<Vec<G1Projective>> = m_matrix
         .iter()
@@ -20,34 +17,23 @@ fn test_qanizk() {
         })
         .collect();
 
-    println!(
-        "m_g1_matrix M({}*{})",
-        m_g1_matrix.len(),
-        m_g1_matrix[0].len()
-    );
-
-    println!("Generating CRS...");
-    let (crs, _trapdoor) = qanizk.gen_crs(&m_g1_matrix);
-    println!("CRS generation: success");
+    let (crs, _) = qanizk.gen_crs(&m_g1_matrix);
 
     let tag = generate_random_message_128();
     let r = <()>::random_vector(k);
     let c0_field = <()>::matrix_vector_mul(&m_matrix, &r);
-    println!("c0_field length: {}", c0_field.len());
 
     let c0_g1: Vec<G1Projective> = c0_field
         .iter()
         .map(|&elem| qanizk.group.scalar_mul_p1(elem))
         .collect();
 
-    let pie = qanizk.prove(&crs, &tag, &c0_g1, &r);
-    println!("Proof generation: success");
-    println!("  t1 length: {}", pie.t1_g1.len());
-    println!("  u1 length: {}", pie.u1_g1.len());
+    let pi = qanizk.prove(&crs, &tag, &c0_g1, &r);
+    let is_valid = qanizk.verify(&crs, &tag, &c0_g1, &pi);
+    assert!(is_valid);
+}
 
-    let is_valid = qanizk.verify(&crs, &tag, &c0_g1, &pie);
-    println!(
-        "Proof verification: {}",
-        if is_valid { "success" } else { "failed" }
-    );
+#[test]
+fn qanizk_fail() {
+    // TODO: implement unit test to ensure QANIZK fails when expected
 }
