@@ -11,3 +11,21 @@ ark-serialize = "0.3"
 ark-std = "0.3"
 ark-bls12-381 = "0.3"
 blake3 = "1.5"
+
+[[bench]]
+name = "arithmetic"
+harness = false
+
+[[bench]]
+name = "full-schemes"
+harness = false
+
+[lib]
+bench = false
+doctest = false
+test = false
+
+[[bin]]
+name = "ibe_schemes"
+bench = false
+test = false
