@@ -1,7 +1,7 @@
 use crate::common::*;
 use ark_bls12_381::G2Projective;
-use ark_ff::{Zero, One, PrimeField};
-use ark_ec::ProjectiveCurve; 
+use ark_ec::ProjectiveCurve;
+use ark_ff::{One, PrimeField, Zero};
 
 pub struct SecretKey {
     pub b: Matrix,
@@ -25,7 +25,9 @@ pub struct AffineMAC {
 impl AffineMAC {
     pub fn new(k: usize, l: usize, l_prime: usize) -> Self {
         Self {
-            k, l, l_prime,
+            k,
+            l,
+            l_prime,
             group: GroupCtx::bls12_381(),
         }
     }
@@ -38,28 +40,32 @@ impl AffineMAC {
             x_matrices.push(<()>::random_matrix(2 * self.k, self.k));
         }
         println!("x matrices length = {}", x_matrices.len());
-        println!("l' = {}",self.l_prime);
+        println!("l' = {}", self.l_prime);
         let mut x_prime = Vec::with_capacity(self.l_prime + 1);
         for _ in 0..=self.l_prime {
             x_prime.push(<()>::random_vector(2 * self.k));
         }
-        SecretKey { b, x_matrices, x_prime }
+        SecretKey {
+            b,
+            x_matrices,
+            x_prime,
+        }
     }
 
     pub fn f_i(&self, i: usize, message: &[u8]) -> FieldElement {
         match i {
             0 | 1 => FieldElement::zero(),
             _ => {
-                let bit_index = (i - 2) / 2;           
-                let bit_value = (i - 2) % 2;           
-                
+                let bit_index = (i - 2) / 2;
+                let bit_value = (i - 2) % 2;
+
                 if bit_index < self.l && bit_index < message.len() * 8 {
-                    let byte_index = bit_index / 8;     
-                    let bit_position = bit_index % 8;   
-                    
+                    let byte_index = bit_index / 8;
+                    let bit_position = bit_index % 8;
+
                     if byte_index < message.len() {
                         let message_bit = ((message[byte_index] >> bit_position) & 1) as usize;
-                        
+
                         if message_bit == bit_value {
                             FieldElement::one()
                         } else {
@@ -72,17 +78,21 @@ impl AffineMAC {
                     FieldElement::zero()
                 }
             }
-        }   
+        }
     }
 
     pub fn f_prime_i(&self, i: usize, _message: &[u8]) -> FieldElement {
-        if i == 0 { FieldElement::one() } else { FieldElement::zero() }
+        if i == 0 {
+            FieldElement::one()
+        } else {
+            FieldElement::zero()
+        }
     }
 
     pub fn tag(&self, sk: &SecretKey, message: &[u8]) -> Tag {
         let s = <()>::random_vector(self.k);
         let t_field = <()>::matrix_vector_mul(&sk.b, &s);
-        
+
         let mut u_field: Vector = vec![FieldElement::zero(); 2 * self.k];
 
         // print!("\nf_i = ");
@@ -106,20 +116,27 @@ impl AffineMAC {
                 u_field = <()>::vector_add(&u_field, &scaled_xprime);
             }
         }
-        
-        let t_g2: Vec<G2Projective> = t_field.clone().into_iter()
+
+        let t_g2: Vec<G2Projective> = t_field
+            .clone()
+            .into_iter()
             .map(|c| self.group.scalar_mul_p2(c))
             .collect();
-        let u_g2: Vec<G2Projective> = u_field.into_iter()
+        let u_g2: Vec<G2Projective> = u_field
+            .into_iter()
             .map(|c| self.group.scalar_mul_p2(c))
             .collect();
 
-        Tag { t_g2, u_g2, t_field }
+        Tag {
+            t_g2,
+            u_g2,
+            t_field,
+        }
     }
 
     pub fn verify(&self, sk: &SecretKey, message: &[u8], tag: &Tag) -> bool {
         let mut expected: Vec<G2Projective> = vec![G2Projective::zero(); 2 * self.k];
-        
+
         // print!("\nf_i = ");
         for i in 0..=self.l {
             let fi = self.f_i(i, message);
@@ -155,8 +172,8 @@ impl AffineMAC {
             }
         }
 
-        if expected.len() != tag.u_g2.len() { 
-            return false; 
+        if expected.len() != tag.u_g2.len() {
+            return false;
         }
 
         for (e, u) in expected.iter().zip(tag.u_g2.iter()) {
