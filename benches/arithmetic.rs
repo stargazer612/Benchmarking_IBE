@@ -150,7 +150,7 @@ pub fn bench_matrix_transpose(c: &mut Criterion) {
     let m = random_matrix(size, size);
 
     c.bench_function("matrix_transpose (50)", |b| {
-        b.iter(|| transpose_matrix(bb(&m)))
+        b.iter(|| matrix_transpose(bb(&m)))
     });
 }
 
@@ -201,7 +201,7 @@ pub fn bench_g1_matrix_transpose(c: &mut Criterion) {
         .collect();
 
     c.bench_function("g1_matrix_transpose", |b| {
-        b.iter(|| transpose_g1_matrix(bb(&m)))
+        b.iter(|| matrix_transpose(bb(&m)))
     });
 }
 
@@ -217,7 +217,7 @@ pub fn bench_g2_matrix_transpose(c: &mut Criterion) {
         .collect();
 
     c.bench_function("g2_matrix_transpose", |b| {
-        b.iter(|| transpose_g2_matrix(bb(&m)))
+        b.iter(|| matrix_transpose(bb(&m)))
     });
 }
 

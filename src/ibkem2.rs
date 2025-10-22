@@ -72,8 +72,8 @@ impl IBKEM2 {
 
         for i in 0..=self.l {
             let y_i = random_matrix(self.k, self.k);
-            let y_i_transposed = transpose_matrix(&y_i);
-            let x_i_transposed = transpose_matrix(&mac_sk.x_matrices[i]);
+            let y_i_transposed = matrix_transpose(&y_i);
+            let x_i_transposed = matrix_transpose(&mac_sk.x_matrices[i]);
             let combined = concatenate_matrices(&y_i_transposed, &x_i_transposed);
             let z_i = matrix_multiply(&combined, &m_matrix);
 

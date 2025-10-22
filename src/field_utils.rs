@@ -1,4 +1,4 @@
-use ark_bls12_381::{G1Affine, G1Projective as G1, G2Projective as G2};
+use ark_bls12_381::{G1Affine, G1Projective as G1};
 use ark_ec::{ProjectiveCurve, msm::VariableBaseMSM};
 use ark_ff::{PrimeField, UniformRand, Zero};
 use rand::thread_rng;
@@ -79,14 +79,14 @@ pub fn concatenate_vectors(a: &Vector, b: &Vector) -> Vector {
     result
 }
 
-pub fn transpose_matrix(matrix: &Matrix<FieldElement>) -> Matrix<FieldElement> {
+pub fn matrix_transpose<T: Zero + Copy>(matrix: &Matrix<T>) -> Matrix<T> {
     if matrix.is_empty() {
         return Vec::new();
     }
 
     let rows = matrix.len();
     let cols = matrix[0].len();
-    let mut result = vec![vec![FieldElement::zero(); rows]; cols];
+    let mut result = vec![vec![T::zero(); rows]; cols];
     for i in 0..rows {
         for j in 0..cols {
             result[j][i] = matrix[i][j];
@@ -137,38 +137,4 @@ pub fn g1_matrix_field_multiply(
     }
 
     result
-}
-
-pub fn transpose_g1_matrix(matrix: &Matrix<G1>) -> Matrix<G1> {
-    if matrix.is_empty() {
-        return Vec::new();
-    }
-
-    let rows = matrix.len();
-    let cols = matrix[0].len();
-    let mut transposed = vec![vec![G1::zero(); rows]; cols];
-    for i in 0..rows {
-        for j in 0..cols {
-            transposed[j][i] = matrix[i][j];
-        }
-    }
-
-    transposed
-}
-
-pub fn transpose_g2_matrix(matrix: &Matrix<G2>) -> Matrix<G2> {
-    if matrix.is_empty() {
-        return Vec::new();
-    }
-
-    let rows = matrix.len();
-    let cols = matrix[0].len();
-    let mut transposed = vec![vec![G2::zero(); rows]; cols];
-    for i in 0..rows {
-        for j in 0..cols {
-            transposed[j][i] = matrix[i][j];
-        }
-    }
-
-    transposed
 }

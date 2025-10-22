@@ -74,7 +74,7 @@ impl QANIZK {
             })
             .collect();
 
-        let m_transpose_matrix = transpose_g1_matrix(&m1_matrix);
+        let m_transpose_matrix = matrix_transpose(&m1_matrix);
         let mk_g1 = g1_matrix_field_multiply(&m_transpose_matrix, &k_matrix);
 
         let mut kjb_a_g2 = Vec::new();
@@ -99,7 +99,7 @@ impl QANIZK {
 
                 kjb_row_a.push(kjb_row_a_g2);
 
-                let b_transpose = transpose_matrix(&b_matrix);
+                let b_transpose = matrix_transpose(&b_matrix);
                 let b_kjb = matrix_multiply(&b_transpose, &kjb_matrix);
 
                 let b_kjb_row_g1: Matrix<G1> = b_kjb
@@ -187,7 +187,7 @@ impl QANIZK {
         let hash_input = self.hash_tag_c0_t1(tag, c0_g1, &t1_g1);
         let tau = blake3_hash_to_bits(&hash_input, self.lamda);
 
-        let mk_g1_transpose = transpose_g1_matrix(&crs.mk_g1);
+        let mk_g1_transpose = matrix_transpose(&crs.mk_g1);
         let r_mk = group_matrix_vector_mul_msm(&mk_g1_transpose, &r);
         let s_b_k_tau = self.compute_s_times_b_k_tau(&s, &crs.b_kjb_g1, &tau);
 
