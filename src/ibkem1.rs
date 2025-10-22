@@ -15,7 +15,7 @@ pub struct IBKEM1PublicKey {
 
 pub struct IBKEM1SecretKey {
     pub mac_sk: MACSecretKey,
-    pub y_matrices: Vec<Matrix>,
+    pub y_matrices: Vec<Matrix<FieldElement>>,
     pub y_prime_vectors: Vec<Vector>,
 }
 

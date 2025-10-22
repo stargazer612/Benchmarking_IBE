@@ -7,8 +7,8 @@ use ark_ec::ProjectiveCurve;
 use ark_ff::{One, PrimeField, Zero};
 
 pub struct SecretKey {
-    pub b: Matrix,
-    pub x_matrices: Vec<Matrix>,
+    pub b: Matrix<FieldElement>,
+    pub x_matrices: Vec<Matrix<FieldElement>>,
     pub x_prime: Vec<Vector>,
 }
 

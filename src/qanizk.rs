@@ -17,7 +17,7 @@ pub struct CRS {
 }
 
 pub struct Trapdoor {
-    pub k_matrix: Matrix,
+    pub k_matrix: Matrix<FieldElement>,
 }
 
 pub struct QANIZKProof {

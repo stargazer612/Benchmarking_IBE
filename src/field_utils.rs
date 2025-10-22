@@ -14,11 +14,11 @@ pub fn random_vector(len: usize) -> Vector {
     (0..len).map(|_| random_field_element()).collect()
 }
 
-pub fn random_matrix(rows: usize, cols: usize) -> Matrix {
+pub fn random_matrix(rows: usize, cols: usize) -> Matrix<FieldElement> {
     (0..rows).map(|_| random_vector(cols)).collect()
 }
 
-pub fn matrix_vector_mul(matrix: &Matrix, vector: &Vector) -> Vector {
+pub fn matrix_vector_mul(matrix: &Matrix<FieldElement>, vector: &Vector) -> Vector {
     matrix
         .iter()
         .map(|row| {
@@ -38,7 +38,7 @@ pub fn scalar_vector_mul(scalar: FieldElement, vector: &Vector) -> Vector {
     vector.iter().map(|&x| scalar * x).collect()
 }
 
-pub fn matrix_multiply(a: &Matrix, b: &Matrix) -> Matrix {
+pub fn matrix_multiply(a: &Matrix<FieldElement>, b: &Matrix<FieldElement>) -> Matrix<FieldElement> {
     let rows_a = a.len();
     let cols_a = a[0].len();
     let cols_b = b[0].len();
@@ -59,7 +59,10 @@ pub fn matrix_multiply(a: &Matrix, b: &Matrix) -> Matrix {
     result
 }
 
-pub fn concatenate_matrices(a: &Matrix, b: &Matrix) -> Matrix {
+pub fn concatenate_matrices(
+    a: &Matrix<FieldElement>,
+    b: &Matrix<FieldElement>,
+) -> Matrix<FieldElement> {
     assert_eq!(a.len(), b.len(), "Matrices must have same number of rows");
     let mut result = Vec::with_capacity(a.len());
     for i in 0..a.len() {
@@ -76,7 +79,7 @@ pub fn concatenate_vectors(a: &Vector, b: &Vector) -> Vector {
     result
 }
 
-pub fn transpose_matrix(matrix: &Matrix) -> Matrix {
+pub fn transpose_matrix(matrix: &Matrix<FieldElement>) -> Matrix<FieldElement> {
     if matrix.is_empty() {
         return Vec::new();
     }
@@ -111,7 +114,7 @@ pub fn group_matrix_vector_mul_msm(
 
 pub fn g1_matrix_field_multiply(
     left_g1: &Vec<Vec<G1Projective>>,
-    right_field: &Matrix,
+    right_field: &Matrix<FieldElement>,
 ) -> Vec<Vec<G1Projective>> {
     let rows_left = left_g1.len();
     let cols_left = left_g1[0].len();
