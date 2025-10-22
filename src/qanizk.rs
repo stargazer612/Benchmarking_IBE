@@ -1,4 +1,6 @@
 use crate::common::*;
+use crate::field_utils::*;
+
 use ark_bls12_381::{G1Affine, G1Projective, G2Projective};
 use ark_ec::{ProjectiveCurve, msm::VariableBaseMSM};
 use ark_ff::{BigInteger, One, PrimeField, Zero};

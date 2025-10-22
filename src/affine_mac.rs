@@ -1,4 +1,6 @@
 use crate::common::*;
+use crate::field_utils::*;
+
 use ark_bls12_381::G2Projective;
 use ark_ec::ProjectiveCurve;
 use ark_ff::{One, PrimeField, Zero};
