@@ -4,7 +4,7 @@ use ibe_schemes::*;
 fn test_ibkem1_ok() {
     let m_len = 128;
     let l = 2 * m_len + 1;
-    let ibkem = IBKEM::new(2, l, 0);
+    let ibkem = IBKEM1::new(2, l, 0);
     let (pk, sk) = ibkem.setup();
 
     let (_, identity) = generate_email_and_hash_identity(128);
@@ -20,7 +20,7 @@ fn test_ibkem1_ok() {
 fn test_ibkem1_fail() {
     let m_len = 128;
     let l = 2 * m_len + 1;
-    let ibkem = IBKEM::new(2, l, 0);
+    let ibkem = IBKEM1::new(2, l, 0);
     let (pk, sk) = ibkem.setup();
 
     let (_, identity) = generate_email_and_hash_identity(128);

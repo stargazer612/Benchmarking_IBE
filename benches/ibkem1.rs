@@ -9,14 +9,14 @@ pub fn bench_ibkem1_new(c: &mut Criterion) {
     let l = 2 * m_len + 1;
 
     c.bench_function("ibkem1_new (128)", |b| {
-        b.iter(|| IBKEM::new(bb(2), bb(l), bb(0)))
+        b.iter(|| IBKEM1::new(bb(2), bb(l), bb(0)))
     });
 }
 
 pub fn bench_ibkem1_setup(c: &mut Criterion) {
     let m_len = 128;
     let l = 2 * m_len + 1;
-    let ibkem = IBKEM::new(2, l, 0);
+    let ibkem = IBKEM1::new(2, l, 0);
 
     c.bench_function("ibkem1_setup (128)", |b| b.iter(|| ibkem.setup()));
 }
@@ -24,7 +24,7 @@ pub fn bench_ibkem1_setup(c: &mut Criterion) {
 pub fn bench_ibkem1_extract(c: &mut Criterion) {
     let m_len = 128;
     let l = 2 * m_len + 1;
-    let ibkem = IBKEM::new(2, l, 0);
+    let ibkem = IBKEM1::new(2, l, 0);
     let (_, sk) = ibkem.setup();
     let (_, identity) = generate_email_and_hash_identity(128);
 
@@ -36,7 +36,7 @@ pub fn bench_ibkem1_extract(c: &mut Criterion) {
 pub fn bench_ibkem1_encrypt(c: &mut Criterion) {
     let m_len = 128;
     let l = 2 * m_len + 1;
-    let ibkem = IBKEM::new(2, l, 0);
+    let ibkem = IBKEM1::new(2, l, 0);
     let (pk, _) = ibkem.setup();
     let (_, identity) = generate_email_and_hash_identity(128);
 
@@ -48,7 +48,7 @@ pub fn bench_ibkem1_encrypt(c: &mut Criterion) {
 pub fn bench_ibkem1_decrypt(c: &mut Criterion) {
     let m_len = 128;
     let l = 2 * m_len + 1;
-    let ibkem = IBKEM::new(2, l, 0);
+    let ibkem = IBKEM1::new(2, l, 0);
     let (pk, sk) = ibkem.setup();
     let (_, identity) = generate_email_and_hash_identity(128);
     let usk = ibkem.extract(&sk, &identity);
