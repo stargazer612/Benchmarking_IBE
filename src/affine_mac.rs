@@ -113,15 +113,8 @@ impl AffineMAC {
             }
         }
 
-        let t_g2: Vec<G2> = t_field
-            .clone()
-            .into_iter()
-            .map(|c| self.group.scalar_mul_p2(c))
-            .collect();
-        let u_g2: Vec<G2> = u_field
-            .into_iter()
-            .map(|c| self.group.scalar_mul_p2(c))
-            .collect();
+        let t_g2: Vec<G2> = vector_lift_g2(&t_field, &self.group);
+        let u_g2: Vec<G2> = vector_lift_g2(&u_field, &self.group);
 
         Tag {
             t_g2,

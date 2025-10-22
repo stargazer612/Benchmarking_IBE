@@ -141,10 +141,7 @@ impl IBKEM1 {
             }
         }
 
-        let v_g2 = v_field
-            .iter()
-            .map(|&element| self.group.scalar_mul_p2(element))
-            .collect();
+        let v_g2 = vector_lift_g2(&v_field, &self.group);
 
         IBKEM1UserSecretKey {
             t_g2: tag.t_g2,

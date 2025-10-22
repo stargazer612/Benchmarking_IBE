@@ -14,11 +14,7 @@ fn qanizk_ok() {
     let tag = generate_random_message_128();
     let r = random_vector(k);
     let c0_field = matrix_vector_mul(&m_matrix, &r);
-
-    let c0_g1: Vec<G1> = c0_field
-        .iter()
-        .map(|&elem| qanizk.group.scalar_mul_p1(elem))
-        .collect();
+    let c0_g1: Vec<G1> = vector_lift_g1(&c0_field, &qanizk.group);
 
     let pi = qanizk.prove(&crs, &tag, &c0_g1, &r);
     let is_valid = qanizk.verify(&crs, &tag, &c0_g1, &pi);

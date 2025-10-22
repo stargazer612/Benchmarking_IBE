@@ -37,10 +37,7 @@ pub fn bench_qanizk_prove(c: &mut Criterion) {
     let tag = generate_random_message_128();
     let r = random_vector(k);
     let c0_field = matrix_vector_mul(&m_matrix, &r);
-    let c0_g1: Vec<G1> = c0_field
-        .iter()
-        .map(|&elem| qanizk.group.scalar_mul_p1(elem))
-        .collect();
+    let c0_g1: Vec<G1> = vector_lift_g1(&c0_field, &qanizk.group);
 
     c.bench_function("quanizk_prove (128)", |b| {
         b.iter(|| qanizk.prove(bb(&crs), bb(&tag), bb(&c0_g1), bb(&r)))
@@ -58,10 +55,7 @@ pub fn bench_qanizk_verify(c: &mut Criterion) {
     let tag = generate_random_message_128();
     let r = random_vector(k);
     let c0_field = matrix_vector_mul(&m_matrix, &r);
-    let c0_g1: Vec<G1> = c0_field
-        .iter()
-        .map(|&elem| qanizk.group.scalar_mul_p1(elem))
-        .collect();
+    let c0_g1: Vec<G1> = vector_lift_g1(&c0_field, &qanizk.group);
     let pi = qanizk.prove(&crs, &tag, &c0_g1, &r);
 
     c.bench_function("quanizk_verify (128)", |b| {

@@ -60,6 +60,14 @@ pub fn matrix_multiply(a: &Matrix<FieldElement>, b: &Matrix<FieldElement>) -> Ma
     result
 }
 
+pub fn vector_lift_g1(v: &Vector, group: &GroupCtx) -> Vec<G1> {
+    v.iter().map(|&e| group.scalar_mul_p1(e)).collect()
+}
+
+pub fn vector_lift_g2(v: &Vector, group: &GroupCtx) -> Vec<G2> {
+    v.iter().map(|&e| group.scalar_mul_p2(e)).collect()
+}
+
 pub fn matrix_lift_g1(m: &Matrix<FieldElement>, group: &GroupCtx) -> Matrix<G1> {
     m.iter()
         .map(|row| row.iter().map(|&e| group.scalar_mul_p1(e)).collect())
