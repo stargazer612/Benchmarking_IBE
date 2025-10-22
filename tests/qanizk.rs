@@ -8,7 +8,7 @@ fn qanizk_ok() {
     let qanizk = QANIZK::new(k, lambda);
     let m_matrix = random_matrix(3 * k, k);
 
-    let m_g1_matrix: Vec<Vec<G1>> = m_matrix
+    let m_g1_matrix: Matrix<G1> = m_matrix
         .iter()
         .map(|row| {
             row.iter()

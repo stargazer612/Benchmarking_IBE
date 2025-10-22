@@ -95,7 +95,7 @@ pub fn transpose_matrix(matrix: &Matrix<FieldElement>) -> Matrix<FieldElement> {
     result
 }
 
-pub fn group_matrix_vector_mul_msm(matrix_g1: &Vec<Vec<G1>>, vector: &Vector) -> Vec<G1> {
+pub fn group_matrix_vector_mul_msm(matrix_g1: &Matrix<G1>, vector: &Vector) -> Vec<G1> {
     matrix_g1
         .iter()
         .map(|row| {
@@ -110,9 +110,9 @@ pub fn group_matrix_vector_mul_msm(matrix_g1: &Vec<Vec<G1>>, vector: &Vector) ->
 }
 
 pub fn g1_matrix_field_multiply(
-    left_g1: &Vec<Vec<G1>>,
+    left_g1: &Matrix<G1>,
     right_field: &Matrix<FieldElement>,
-) -> Vec<Vec<G1>> {
+) -> Matrix<G1> {
     let rows_left = left_g1.len();
     let cols_left = left_g1[0].len();
     let rows_right = right_field.len();
@@ -139,7 +139,7 @@ pub fn g1_matrix_field_multiply(
     result
 }
 
-pub fn transpose_g1_matrix(matrix: &Vec<Vec<G1>>) -> Vec<Vec<G1>> {
+pub fn transpose_g1_matrix(matrix: &Matrix<G1>) -> Matrix<G1> {
     if matrix.is_empty() {
         return Vec::new();
     }
@@ -156,7 +156,7 @@ pub fn transpose_g1_matrix(matrix: &Vec<Vec<G1>>) -> Vec<Vec<G1>> {
     transposed
 }
 
-pub fn transpose_g2_matrix(matrix: &Vec<Vec<G2>>) -> Vec<Vec<G2>> {
+pub fn transpose_g2_matrix(matrix: &Matrix<G2>) -> Matrix<G2> {
     if matrix.is_empty() {
         return Vec::new();
     }

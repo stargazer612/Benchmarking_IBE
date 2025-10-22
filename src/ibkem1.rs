@@ -8,8 +8,8 @@ use ark_ec::ProjectiveCurve;
 use ark_ff::{Field, One, PrimeField, Zero};
 
 pub struct IBKEM1PublicKey {
-    pub m_matrix: Vec<Vec<G1>>,
-    pub z_matrices: Vec<Vec<Vec<G1>>>,
+    pub m_matrix: Matrix<G1>,
+    pub z_matrices: Vec<Matrix<G1>>,
     pub z_prime_vectors: Vec<Vec<G1>>,
 }
 
@@ -96,7 +96,7 @@ impl IBKEM1 {
             z_prime_vectors.push(z_prime_i);
         }
 
-        let m_g1: Vec<Vec<G1>> = m_matrix
+        let m_g1: Matrix<G1> = m_matrix
             .iter()
             .map(|row| {
                 row.iter()
@@ -105,7 +105,7 @@ impl IBKEM1 {
             })
             .collect();
 
-        let z_matrices_g1: Vec<Vec<Vec<G1>>> = z_matrices
+        let z_matrices_g1: Vec<Matrix<G1>> = z_matrices
             .iter()
             .map(|matrix| {
                 matrix
@@ -119,7 +119,7 @@ impl IBKEM1 {
             })
             .collect();
 
-        let z_prime_vectors_g1: Vec<Vec<G1>> = z_prime_vectors
+        let z_prime_vectors_g1: Matrix<G1> = z_prime_vectors
             .iter()
             .map(|vector| {
                 vector

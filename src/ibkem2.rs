@@ -9,8 +9,8 @@ use ark_ec::ProjectiveCurve;
 use ark_ff::{BigInteger, Field, One, PrimeField, Zero};
 
 pub struct IBKEM2PublicKey {
-    pub m_matrix: Vec<Vec<G1>>,
-    pub z_matrices: Vec<Vec<Vec<G1>>>,
+    pub m_matrix: Matrix<G1>,
+    pub z_matrices: Vec<Matrix<G1>>,
     pub z_prime_vectors: Vec<Vec<G1>>,
     pub crs: CRS,
 }
@@ -101,7 +101,7 @@ impl IBKEM2 {
             z_prime_vectors.push(z_prime_i);
         }
 
-        let m_g1: Vec<Vec<G1>> = m_matrix
+        let m_g1: Matrix<G1> = m_matrix
             .iter()
             .map(|row| {
                 row.iter()
@@ -110,7 +110,7 @@ impl IBKEM2 {
             })
             .collect();
 
-        let z_matrices_g1: Vec<Vec<Vec<G1>>> = z_matrices
+        let z_matrices_g1: Vec<Matrix<G1>> = z_matrices
             .iter()
             .map(|matrix| {
                 matrix

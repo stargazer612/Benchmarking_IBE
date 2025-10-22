@@ -8,12 +8,12 @@ use ark_ec::{ProjectiveCurve, msm::VariableBaseMSM};
 use ark_ff::{BigInteger, One, PrimeField, Zero};
 
 pub struct CRS {
-    pub a_g2: Vec<Vec<G2>>,
-    pub ka_g2: Vec<Vec<G2>>,
-    pub b_g1: Vec<Vec<G1>>,
-    pub mk_g1: Vec<Vec<G1>>,
-    pub kjb_a_g2: Vec<Vec<Vec<Vec<G2>>>>,
-    pub b_kjb_g1: Vec<Vec<Vec<Vec<G1>>>>,
+    pub a_g2: Matrix<G2>,
+    pub ka_g2: Matrix<G2>,
+    pub b_g1: Matrix<G1>,
+    pub mk_g1: Matrix<G1>,
+    pub kjb_a_g2: Vec<Vec<Matrix<G2>>>,
+    pub b_kjb_g1: Vec<Vec<Matrix<G1>>>,
 }
 
 pub struct Trapdoor {
@@ -40,12 +40,12 @@ impl QANIZK {
         }
     }
 
-    pub fn gen_crs(&self, m1_matrix: &Vec<Vec<G1>>) -> (CRS, Trapdoor) {
+    pub fn gen_crs(&self, m1_matrix: &Matrix<G1>) -> (CRS, Trapdoor) {
         let a_matrix = random_matrix(self.k + 1, self.k);
         let b_matrix = random_matrix(self.k, self.k);
         let k_matrix = random_matrix(m1_matrix.len(), self.k + 1);
 
-        let a_g2: Vec<Vec<G2>> = a_matrix
+        let a_g2: Matrix<G2> = a_matrix
             .iter()
             .map(|row| {
                 row.iter()
@@ -56,7 +56,7 @@ impl QANIZK {
 
         let ka_matrix = matrix_multiply(&k_matrix, &a_matrix);
 
-        let ka_g2: Vec<Vec<G2>> = ka_matrix
+        let ka_g2: Matrix<G2> = ka_matrix
             .iter()
             .map(|row| {
                 row.iter()
@@ -65,7 +65,7 @@ impl QANIZK {
             })
             .collect();
 
-        let b_g1: Vec<Vec<G1>> = b_matrix
+        let b_g1: Matrix<G1> = b_matrix
             .iter()
             .map(|row| {
                 row.iter()
@@ -88,7 +88,7 @@ impl QANIZK {
                 let kjb_matrix = random_matrix(self.k, self.k + 1);
                 let kjb_a = matrix_multiply(&kjb_matrix, &a_matrix);
 
-                let kjb_row_a_g2: Vec<Vec<G2>> = kjb_a
+                let kjb_row_a_g2: Matrix<G2> = kjb_a
                     .iter()
                     .map(|row| {
                         row.iter()
@@ -102,7 +102,7 @@ impl QANIZK {
                 let b_transpose = transpose_matrix(&b_matrix);
                 let b_kjb = matrix_multiply(&b_transpose, &kjb_matrix);
 
-                let b_kjb_row_g1: Vec<Vec<G1>> = b_kjb
+                let b_kjb_row_g1: Matrix<G1> = b_kjb
                     .iter()
                     .map(|row| {
                         row.iter()
@@ -152,7 +152,7 @@ impl QANIZK {
     pub fn compute_s_times_b_k_tau(
         &self,
         s: &Vector,
-        b_kjb_g1: &Vec<Vec<Vec<Vec<G1>>>>,
+        b_kjb_g1: &Vec<Vec<Matrix<G1>>>,
         tau: &Vec<usize>,
     ) -> Vec<G1> {
         let lambda = tau.len();
@@ -200,11 +200,7 @@ impl QANIZK {
         QANIZKProof { t1_g1, u1_g1 }
     }
 
-    fn compute_k_tau_a_from_crs(
-        &self,
-        kjb_a_g2: &[Vec<Vec<Vec<G2>>>],
-        tau: &[usize],
-    ) -> Vec<Vec<G2>> {
+    fn compute_k_tau_a_from_crs(&self, kjb_a_g2: &[Vec<Matrix<G2>>], tau: &[usize]) -> Matrix<G2> {
         let lambda = tau.len();
         assert_eq!(
             kjb_a_g2.len(),

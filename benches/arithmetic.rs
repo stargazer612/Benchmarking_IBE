@@ -157,7 +157,7 @@ pub fn bench_matrix_transpose(c: &mut Criterion) {
 pub fn bench_group_matrix_vector_mul_msm(c: &mut Criterion) {
     let size = 20;
     let group = GroupCtx::bls12_381();
-    let m: Vec<Vec<G1>> = (0..size)
+    let m: Matrix<G1> = (0..size)
         .map(|_| {
             (0..size)
                 .map(|_| group.scalar_mul_p1(random_field_element()))
@@ -174,7 +174,7 @@ pub fn bench_group_matrix_vector_mul_msm(c: &mut Criterion) {
 pub fn bench_matrix_field_multiply(c: &mut Criterion) {
     let size = 20;
     let group = GroupCtx::bls12_381();
-    let m: Vec<Vec<G1>> = (0..size)
+    let m: Matrix<G1> = (0..size)
         .map(|_| {
             (0..size)
                 .map(|_| group.scalar_mul_p1(random_field_element()))
@@ -192,7 +192,7 @@ pub fn bench_matrix_field_multiply(c: &mut Criterion) {
 pub fn bench_g1_matrix_transpose(c: &mut Criterion) {
     let size = 20;
     let group = GroupCtx::bls12_381();
-    let m: Vec<Vec<G1>> = (0..size)
+    let m: Matrix<G1> = (0..size)
         .map(|_| {
             (0..size)
                 .map(|_| group.scalar_mul_p1(random_field_element()))
@@ -208,7 +208,7 @@ pub fn bench_g1_matrix_transpose(c: &mut Criterion) {
 pub fn bench_g2_matrix_transpose(c: &mut Criterion) {
     let size = 20;
     let group = GroupCtx::bls12_381();
-    let m: Vec<Vec<G2>> = (0..size)
+    let m: Matrix<G2> = (0..size)
         .map(|_| {
             (0..size)
                 .map(|_| group.scalar_mul_p2(random_field_element()))
