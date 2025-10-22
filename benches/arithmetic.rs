@@ -2,7 +2,6 @@ use criterion::{Criterion, criterion_group, criterion_main};
 
 use std::hint::black_box as bb;
 
-use ark_bls12_381::{G1Projective as G1, G2Projective as G2};
 use ibe_schemes::*;
 
 pub fn bench_bls12_381(c: &mut Criterion) {
@@ -157,67 +156,46 @@ pub fn bench_matrix_transpose(c: &mut Criterion) {
 pub fn bench_group_matrix_vector_mul_msm(c: &mut Criterion) {
     let size = 20;
     let group = GroupCtx::bls12_381();
-    let m: Matrix<G1> = (0..size)
-        .map(|_| {
-            (0..size)
-                .map(|_| group.scalar_mul_p1(random_field_element()))
-                .collect()
-        })
-        .collect();
+    let m = random_matrix(size, size);
+    let m_g = matrix_lift_g1(&m, &group);
     let v = random_vector(size);
 
     c.bench_function("group_matrix_vector_mul_msm (20)", |b| {
-        b.iter(|| group_matrix_vector_mul_msm(bb(&m), bb(&v)))
+        b.iter(|| group_matrix_vector_mul_msm(bb(&m_g), bb(&v)))
     });
 }
 
 pub fn bench_matrix_field_multiply(c: &mut Criterion) {
     let size = 20;
     let group = GroupCtx::bls12_381();
-    let m: Matrix<G1> = (0..size)
-        .map(|_| {
-            (0..size)
-                .map(|_| group.scalar_mul_p1(random_field_element()))
-                .collect()
-        })
-        .collect();
-
+    let m = random_matrix(size, size);
+    let m_g = matrix_lift_g1(&m, &group);
     let n = random_matrix(size, size);
 
     c.bench_function("matrix_field_multiply (20)", |b| {
-        b.iter(|| g1_matrix_field_multiply(bb(&m), bb(&n)))
+        b.iter(|| g1_matrix_field_multiply(bb(&m_g), bb(&n)))
     });
 }
 
 pub fn bench_g1_matrix_transpose(c: &mut Criterion) {
     let size = 20;
     let group = GroupCtx::bls12_381();
-    let m: Matrix<G1> = (0..size)
-        .map(|_| {
-            (0..size)
-                .map(|_| group.scalar_mul_p1(random_field_element()))
-                .collect()
-        })
-        .collect();
+    let m = random_matrix(size, size);
+    let m_g = matrix_lift_g1(&m, &group);
 
     c.bench_function("g1_matrix_transpose", |b| {
-        b.iter(|| matrix_transpose(bb(&m)))
+        b.iter(|| matrix_transpose(bb(&m_g)))
     });
 }
 
 pub fn bench_g2_matrix_transpose(c: &mut Criterion) {
     let size = 20;
     let group = GroupCtx::bls12_381();
-    let m: Matrix<G2> = (0..size)
-        .map(|_| {
-            (0..size)
-                .map(|_| group.scalar_mul_p2(random_field_element()))
-                .collect()
-        })
-        .collect();
+    let m = random_matrix(size, size);
+    let m_g = matrix_lift_g2(&m, &group);
 
     c.bench_function("g2_matrix_transpose", |b| {
-        b.iter(|| matrix_transpose(bb(&m)))
+        b.iter(|| matrix_transpose(bb(&m_g)))
     });
 }
 

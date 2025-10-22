@@ -19,14 +19,7 @@ pub fn bench_qanizk_gen_crs(c: &mut Criterion) {
     let lambda = 128;
     let qanizk = QANIZK::new(k, lambda);
     let m_matrix = random_matrix(3 * k, k);
-    let m_g1_matrix: Matrix<G1> = m_matrix
-        .iter()
-        .map(|row| {
-            row.iter()
-                .map(|&elem| qanizk.group.scalar_mul_p1(elem))
-                .collect()
-        })
-        .collect();
+    let m_g1_matrix: Matrix<G1> = matrix_lift_g1(&m_matrix, &qanizk.group);
 
     c.bench_function("quanizk_gen_crs (128)", |b| {
         b.iter(|| qanizk.gen_crs(bb(&m_g1_matrix)))
@@ -38,14 +31,7 @@ pub fn bench_qanizk_prove(c: &mut Criterion) {
     let lambda = 128;
     let qanizk = QANIZK::new(k, lambda);
     let m_matrix = random_matrix(3 * k, k);
-    let m_g1_matrix: Matrix<G1> = m_matrix
-        .iter()
-        .map(|row| {
-            row.iter()
-                .map(|&elem| qanizk.group.scalar_mul_p1(elem))
-                .collect()
-        })
-        .collect();
+    let m_g1_matrix: Matrix<G1> = matrix_lift_g1(&m_matrix, &qanizk.group);
     let (crs, _) = qanizk.gen_crs(&m_g1_matrix);
 
     let tag = generate_random_message_128();
@@ -66,14 +52,7 @@ pub fn bench_qanizk_verify(c: &mut Criterion) {
     let lambda = 128;
     let qanizk = QANIZK::new(k, lambda);
     let m_matrix = random_matrix(3 * k, k);
-    let m_g1_matrix: Matrix<G1> = m_matrix
-        .iter()
-        .map(|row| {
-            row.iter()
-                .map(|&elem| qanizk.group.scalar_mul_p1(elem))
-                .collect()
-        })
-        .collect();
+    let m_g1_matrix: Matrix<G1> = matrix_lift_g1(&m_matrix, &qanizk.group);
     let (crs, _) = qanizk.gen_crs(&m_g1_matrix);
 
     let tag = generate_random_message_128();

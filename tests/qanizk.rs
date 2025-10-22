@@ -7,15 +7,7 @@ fn qanizk_ok() {
     let lambda = 128;
     let qanizk = QANIZK::new(k, lambda);
     let m_matrix = random_matrix(3 * k, k);
-
-    let m_g1_matrix: Matrix<G1> = m_matrix
-        .iter()
-        .map(|row| {
-            row.iter()
-                .map(|&elem| qanizk.group.scalar_mul_p1(elem))
-                .collect()
-        })
-        .collect();
+    let m_g1_matrix: Matrix<G1> = matrix_lift_g1(&m_matrix, &qanizk.group);
 
     let (crs, _) = qanizk.gen_crs(&m_g1_matrix);
 

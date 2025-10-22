@@ -1,8 +1,9 @@
-use ark_bls12_381::{G1Affine, G1Projective as G1};
+use ark_bls12_381::{G1Affine, G1Projective as G1, G2Projective as G2};
 use ark_ec::{ProjectiveCurve, msm::VariableBaseMSM};
 use ark_ff::{PrimeField, UniformRand, Zero};
 use rand::thread_rng;
 
+use crate::GroupCtx;
 use crate::{FieldElement, Matrix, Vector};
 
 pub fn random_field_element() -> FieldElement {
@@ -57,6 +58,18 @@ pub fn matrix_multiply(a: &Matrix<FieldElement>, b: &Matrix<FieldElement>) -> Ma
         }
     }
     result
+}
+
+pub fn matrix_lift_g1(m: &Matrix<FieldElement>, group: &GroupCtx) -> Matrix<G1> {
+    m.iter()
+        .map(|row| row.iter().map(|&e| group.scalar_mul_p1(e)).collect())
+        .collect()
+}
+
+pub fn matrix_lift_g2(m: &Matrix<FieldElement>, group: &GroupCtx) -> Matrix<G2> {
+    m.iter()
+        .map(|row| row.iter().map(|&e| group.scalar_mul_p2(e)).collect())
+        .collect()
 }
 
 pub fn concatenate_matrices(

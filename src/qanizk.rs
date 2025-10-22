@@ -45,34 +45,10 @@ impl QANIZK {
         let b_matrix = random_matrix(self.k, self.k);
         let k_matrix = random_matrix(m1_matrix.len(), self.k + 1);
 
-        let a_g2: Matrix<G2> = a_matrix
-            .iter()
-            .map(|row| {
-                row.iter()
-                    .map(|&element| self.group.scalar_mul_p2(element))
-                    .collect()
-            })
-            .collect();
-
+        let a_g2: Matrix<G2> = matrix_lift_g2(&a_matrix, &self.group);
         let ka_matrix = matrix_multiply(&k_matrix, &a_matrix);
-
-        let ka_g2: Matrix<G2> = ka_matrix
-            .iter()
-            .map(|row| {
-                row.iter()
-                    .map(|&element| self.group.scalar_mul_p2(element))
-                    .collect()
-            })
-            .collect();
-
-        let b_g1: Matrix<G1> = b_matrix
-            .iter()
-            .map(|row| {
-                row.iter()
-                    .map(|&element| self.group.scalar_mul_p1(element))
-                    .collect()
-            })
-            .collect();
+        let ka_g2: Matrix<G2> = matrix_lift_g2(&ka_matrix, &self.group);
+        let b_g1: Matrix<G1> = matrix_lift_g1(&b_matrix, &self.group);
 
         let m_transpose_matrix = matrix_transpose(&m1_matrix);
         let mk_g1 = g1_matrix_field_multiply(&m_transpose_matrix, &k_matrix);
@@ -87,30 +63,12 @@ impl QANIZK {
             for _b in 0..2 {
                 let kjb_matrix = random_matrix(self.k, self.k + 1);
                 let kjb_a = matrix_multiply(&kjb_matrix, &a_matrix);
-
-                let kjb_row_a_g2: Matrix<G2> = kjb_a
-                    .iter()
-                    .map(|row| {
-                        row.iter()
-                            .map(|&element| self.group.scalar_mul_p2(element))
-                            .collect()
-                    })
-                    .collect();
-
+                let kjb_row_a_g2: Matrix<G2> = matrix_lift_g2(&kjb_a, &self.group);
                 kjb_row_a.push(kjb_row_a_g2);
 
                 let b_transpose = matrix_transpose(&b_matrix);
                 let b_kjb = matrix_multiply(&b_transpose, &kjb_matrix);
-
-                let b_kjb_row_g1: Matrix<G1> = b_kjb
-                    .iter()
-                    .map(|row| {
-                        row.iter()
-                            .map(|&element| self.group.scalar_mul_p1(element))
-                            .collect()
-                    })
-                    .collect();
-
+                let b_kjb_row_g1: Matrix<G1> = matrix_lift_g1(&b_kjb, &self.group);
                 b_kjb_row.push(b_kjb_row_g1);
             }
 

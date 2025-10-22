@@ -10,7 +10,7 @@ use ark_ff::{Field, One, PrimeField, Zero};
 pub struct IBKEM1PublicKey {
     pub m_matrix: Matrix<G1>,
     pub z_matrices: Vec<Matrix<G1>>,
-    pub z_prime_vectors: Vec<Vec<G1>>,
+    pub z_prime_vectors: Matrix<G1>,
 }
 
 pub struct IBKEM1SecretKey {
@@ -96,38 +96,14 @@ impl IBKEM1 {
             z_prime_vectors.push(z_prime_i);
         }
 
-        let m_g1: Matrix<G1> = m_matrix
-            .iter()
-            .map(|row| {
-                row.iter()
-                    .map(|&element| self.group.scalar_mul_p1(element))
-                    .collect()
-            })
-            .collect();
+        let m_g1 = matrix_lift_g1(&m_matrix, &self.group);
 
         let z_matrices_g1: Vec<Matrix<G1>> = z_matrices
             .iter()
-            .map(|matrix| {
-                matrix
-                    .iter()
-                    .map(|row| {
-                        row.iter()
-                            .map(|&element| self.group.scalar_mul_p1(element))
-                            .collect()
-                    })
-                    .collect()
-            })
+            .map(|matrix| matrix_lift_g1(&matrix, &self.group))
             .collect();
 
-        let z_prime_vectors_g1: Matrix<G1> = z_prime_vectors
-            .iter()
-            .map(|vector| {
-                vector
-                    .iter()
-                    .map(|&element| self.group.scalar_mul_p1(element))
-                    .collect()
-            })
-            .collect();
+        let z_prime_vectors_g1: Matrix<G1> = matrix_lift_g1(&z_prime_vectors, &self.group);
 
         let pk = IBKEM1PublicKey {
             m_matrix: m_g1,
