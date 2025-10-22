@@ -1,7 +1,8 @@
 use crate::affine_mac::{AffineMAC, SecretKey as MACSecretKey};
-use crate::common::*;
 use crate::field_utils::*;
+use crate::group_ctx::*;
 use crate::qanizk::{CRS, QANIZK, QANIZKProof as Proof};
+use crate::types::*;
 
 use ark_bls12_381::{G1Projective, G2Projective};
 use ark_ec::ProjectiveCurve;

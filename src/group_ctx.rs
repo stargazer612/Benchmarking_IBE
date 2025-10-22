@@ -1,11 +1,8 @@
-use ark_bls12_381::{Bls12_381, Fq12, Fr, G1Affine, G1Projective, G2Affine, G2Projective};
+use ark_bls12_381::{Bls12_381, G1Affine, G1Projective, G2Affine, G2Projective};
 use ark_ec::{PairingEngine, ProjectiveCurve};
 use ark_ff::{Field, PrimeField};
 
-pub type FieldElement = Fr;
-pub type Matrix = Vec<Vec<FieldElement>>;
-pub type Vector = Vec<FieldElement>;
-pub type GTElement = Fq12;
+use crate::{FieldElement, GTElement};
 
 pub struct GroupCtx {
     pub p1: G1Projective,

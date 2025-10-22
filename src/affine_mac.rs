@@ -1,5 +1,6 @@
-use crate::common::*;
 use crate::field_utils::*;
+use crate::group_ctx::*;
+use crate::types::*;
 
 use ark_bls12_381::G2Projective;
 use ark_ec::ProjectiveCurve;
