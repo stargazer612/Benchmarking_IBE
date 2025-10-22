@@ -1,5 +1,6 @@
 use crate::field_utils::*;
 use crate::group_ctx::*;
+use crate::hashing::*;
 use crate::types::*;
 
 use ark_bls12_381::{G1Affine, G1Projective, G2Projective};
