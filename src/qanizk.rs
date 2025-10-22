@@ -70,17 +70,8 @@ impl QANIZK {
             })
             .collect();
 
-        println!("m1_matrix : {}*{}", m1_matrix.len(), m1_matrix[0].len());
         let m_transpose_matrix = ().transpose_g1_matrix(&m1_matrix);
-        println!(
-            "m_transpose_matrix : {}*{}",
-            m_transpose_matrix.len(),
-            m_transpose_matrix[0].len()
-        );
-
-        println!("k_matrix : {}*{}", k_matrix.len(), k_matrix[0].len());
         let mk_g1 = ().g1_matrix_field_multiply(&m_transpose_matrix, &k_matrix);
-        println!("mk_g1 : {}*{}", mk_g1.len(), mk_g1[0].len());
 
         let mut kjb_a_g2 = Vec::new();
         let mut b_kjb_g1 = Vec::new();
@@ -195,13 +186,8 @@ impl QANIZK {
         let s = <()>::random_vector(self.k);
         let t1_g1 = <()>::group_matrix_vector_mul_msm(&crs.b_g1, &s);
 
-        println!("t1_g1 : {}", t1_g1.len());
-
         let hash_input = self.hash_tag_c0_t1(tag, c0_g1, &t1_g1);
         let tau = blake3_hash_to_bits(&hash_input, self.lamda);
-        println!("mk_g1 : {} * {}", crs.mk_g1.len(), crs.mk_g1[0].len());
-
-        println!("r length: {}", r.len());
 
         let mk_g1_transpose = ().transpose_g1_matrix(&crs.mk_g1);
         let r_mk = <()>::group_matrix_vector_mul_msm(&mk_g1_transpose, &r);
@@ -212,7 +198,6 @@ impl QANIZK {
             .zip(s_b_k_tau.iter())
             .map(|(a, b)| *a + *b)
             .collect();
-        println!("u1_g1 : {}", u1_g1.len());
 
         QANIZKProof { t1_g1, u1_g1 }
     }
@@ -222,9 +207,6 @@ impl QANIZK {
         kjb_a_g2: &[Vec<Vec<Vec<G2Projective>>>],
         tau: &[usize],
     ) -> Vec<Vec<G2Projective>> {
-        println!("kjb_a_g2 structure: {} (should be lambda)", kjb_a_g2.len());
-        println!("tau length: {} (should be lambda)", tau.len());
-
         let lambda = tau.len();
         assert_eq!(
             kjb_a_g2.len(),
@@ -233,27 +215,13 @@ impl QANIZK {
         );
 
         if lambda == 0 {
-            println!("WARNING: lambda is 0, returning zero matrix");
-            return vec![vec![G2Projective::zero()]];
-        }
-
-        if !kjb_a_g2.is_empty() && !kjb_a_g2[0].is_empty() {
-            println!("kjb_a_g2[0] has {} matrices", kjb_a_g2[0].len());
-            if !kjb_a_g2[0][0].is_empty() {
-                println!(
-                    "Each matrix is {}×{}",
-                    kjb_a_g2[0][0].len(),
-                    kjb_a_g2[0][0][0].len()
-                );
-            }
+            panic!("Lambda is 0, returning zero matrix");
         }
 
         let rows = kjb_a_g2[0][0].len();
         let cols = kjb_a_g2[0][0][0].len();
 
         let mut k_tau_a = vec![vec![G2Projective::zero(); cols]; rows];
-
-        println!("Initializing K_tau_A as {}×{} matrix", rows, cols);
 
         for j in 0..lambda {
             let tau_j = tau[j];
@@ -267,13 +235,6 @@ impl QANIZK {
                 }
             }
         }
-
-        println!(
-            "K_tau_A computation complete: {}×{}",
-            k_tau_a.len(),
-            k_tau_a[0].len()
-        );
-
         k_tau_a
     }
 
@@ -287,50 +248,22 @@ impl QANIZK {
         let t1_g1 = &pie.t1_g1;
         let u1_g1 = &pie.u1_g1;
 
-        println!("c0_g1: {}", c0_g1.len());
-        println!("t1_g1: {}", t1_g1.len());
-        println!("u1_g1: {}", u1_g1.len());
-        println!("crs.a_g2: {}×{}", crs.a_g2.len(), crs.a_g2[0].len());
-        println!("crs.ka_g2: {}×{}", crs.ka_g2.len(), crs.ka_g2[0].len());
-
         let hash_input = self.hash_tag_c0_t1(tag, c0_g1, t1_g1);
         let tau = blake3_hash_to_bits(&hash_input, self.lamda);
 
         if u1_g1.len() != self.k + 1 {
-            println!(
-                "ERROR: u1_g1 length {} != k+1 = {}",
-                u1_g1.len(),
-                self.k + 1
-            );
-            return false;
+            panic!("u1_g1 length != k + 1");
         }
 
         if t1_g1.len() != self.k {
-            println!("ERROR: t1_g1 length {} != k = {}", t1_g1.len(), self.k);
-            return false;
+            panic!("t1_g1 length != k");
         }
 
         if c0_g1.len() != crs.ka_g2.len() {
-            println!(
-                "ERROR: c0_g1 length {} != ka_g2 rows {}",
-                c0_g1.len(),
-                crs.ka_g2.len()
-            );
-            return false;
+            panic!("c0_g1 length != ka_g2 rows");
         }
 
-        println!("Computing K_tau A...");
         let k_tau_a = self.compute_k_tau_a_from_crs(&crs.kjb_a_g2, &tau);
-        println!(
-            "K_tau A dimensions: {}×{}",
-            k_tau_a.len(),
-            if k_tau_a.is_empty() {
-                0
-            } else {
-                k_tau_a[0].len()
-            }
-        );
-
         let dimensions_consistent = u1_g1.len() == self.k + 1
             && t1_g1.len() == self.k
             && c0_g1.len() == crs.ka_g2.len()
@@ -338,84 +271,51 @@ impl QANIZK {
             && crs.a_g2[0].len() == self.k;
 
         if !dimensions_consistent {
-            println!("Dimension are not matching!");
             return false;
         }
 
         if tau.len() != self.lamda {
-            println!("ERROR: tau length {} != lamda {}", tau.len(), self.lamda);
-            return false;
+            panic!("tau length != lambda");
         }
 
         if crs.kjb_a_g2.len() != self.lamda {
-            println!(
-                "ERROR: kjb_a_g2 length {} != lamda {}",
-                crs.kjb_a_g2.len(),
-                self.lamda
-            );
-            return false;
+            panic!("kjb_a_g2 length != lambda");
         }
 
         let mut all_pairings = Vec::new();
-
-        println!("LHS pairings: e(u1, A)");
-
         for (i, &u1_elem) in u1_g1.iter().enumerate() {
             if i < crs.a_g2.len() {
-                for (j, &a_elem) in crs.a_g2[i].iter().enumerate() {
-                    println!("  LHS pairing: u1[{}] * A[{}][{}]", i, i, j);
+                for (_, &a_elem) in crs.a_g2[i].iter().enumerate() {
                     all_pairings.push((u1_elem, a_elem));
                 }
             }
         }
 
-        println!("RHS1 pairings: e(c0, KA)^(-1)");
-
         for (i, &c0_elem) in c0_g1.iter().enumerate() {
             if i < crs.ka_g2.len() {
-                for (j, &ka_elem) in crs.ka_g2[i].iter().enumerate() {
-                    println!("  RHS1 pairing: -c0[{}] * KA[{}][{}]", i, i, j);
+                for (_, &ka_elem) in crs.ka_g2[i].iter().enumerate() {
                     all_pairings.push((-c0_elem, ka_elem));
                 }
             }
         }
-        println!("RHS2 pairings: e(t1, K_tau A)^(-1)");
         if k_tau_a.len() == t1_g1.len() {
             for (i, &t1_elem) in t1_g1.iter().enumerate() {
                 if i < k_tau_a.len() {
-                    for (j, &ktau_elem) in k_tau_a[i].iter().enumerate() {
-                        println!("  RHS2 pairing: -t1[{}] * K_tau_A[{}][{}]", i, i, j);
+                    for (_, &ktau_elem) in k_tau_a[i].iter().enumerate() {
                         all_pairings.push((-t1_elem, ktau_elem));
                     }
                 }
             }
         } else {
-            println!("ERROR: K_tau A dimensions incompatible with t1");
-            return false;
+            panic!("K_tau A dimensions incompatbiel with t1");
         }
 
-        println!("Total pairings to compute: {}", all_pairings.len());
         if all_pairings.is_empty() {
-            println!("ERROR: No pairings to compute!");
-            return false;
+            panic!("no pairings to compute");
         }
 
-        println!("Computing multi-pairing...");
         let result_gt = self.group.multi_pairing(&all_pairings);
 
-        let one_gt = GTElement::one();
-        let is_valid = result_gt == one_gt;
-
-        println!("Pairing equation satisfied: {}", is_valid);
-
-        if is_valid {
-            println!("QANIZK verification: success");
-        } else {
-            println!("QANIZK verification: failed - pairing equation not satisfied");
-            // println!("Result: {:?}", result_gt);
-            // println!("Expected: {:?}", one_gt);
-        }
-
-        is_valid
+        result_gt == GTElement::one()
     }
 }

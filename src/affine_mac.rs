@@ -35,12 +35,9 @@ impl AffineMAC {
     pub fn gen_mac(&self) -> SecretKey {
         let b = <()>::random_matrix(self.k, self.k);
         let mut x_matrices = Vec::with_capacity(self.l + 1);
-        println!("l = {}", self.l);
         for _ in 0..=self.l {
             x_matrices.push(<()>::random_matrix(2 * self.k, self.k));
         }
-        println!("x matrices length = {}", x_matrices.len());
-        println!("l' = {}", self.l_prime);
         let mut x_prime = Vec::with_capacity(self.l_prime + 1);
         for _ in 0..=self.l_prime {
             x_prime.push(<()>::random_vector(2 * self.k));
@@ -95,11 +92,9 @@ impl AffineMAC {
 
         let mut u_field: Vector = vec![FieldElement::zero(); 2 * self.k];
 
-        // print!("\nf_i = ");
         for i in 0..=self.l {
             let fi = self.f_i(i, message);
             if !fi.is_zero() {
-                // print!("{} ", i);
                 let xi_t = <()>::matrix_vector_mul(&sk.x_matrices[i], &t_field);
                 let scaled = <()>::scalar_vector_mul(fi, &xi_t);
                 u_field = <()>::vector_add(&u_field, &scaled);
@@ -107,11 +102,9 @@ impl AffineMAC {
         }
 
         let f0 = self.f_prime_i(0, message);
-        // print!("\nf_i' = ");
         for i in 0..=self.l_prime {
             let fi_prime = self.f_prime_i(i, message);
             if !fi_prime.is_zero() {
-                // print!("{} ", i);
                 let scaled_xprime = <()>::scalar_vector_mul(f0, &sk.x_prime[i]);
                 u_field = <()>::vector_add(&u_field, &scaled_xprime);
             }
@@ -137,11 +130,9 @@ impl AffineMAC {
     pub fn verify(&self, sk: &SecretKey, message: &[u8], tag: &Tag) -> bool {
         let mut expected: Vec<G2Projective> = vec![G2Projective::zero(); 2 * self.k];
 
-        // print!("\nf_i = ");
         for i in 0..=self.l {
             let fi = self.f_i(i, message);
             if !fi.is_zero() {
-                // print!("{} ", i);
                 let xi = &sk.x_matrices[i];
                 for r in 0..(2 * self.k) {
                     let mut accum = G2Projective::zero();

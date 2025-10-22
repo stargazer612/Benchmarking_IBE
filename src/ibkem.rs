@@ -72,21 +72,8 @@ impl IBKEM {
     }
 
     pub fn setup(&self) -> (IBKEMPublicKey, IBKEMSecretKey) {
-        println!("  k = {}", self.k);
-        println!("  eta (2*k) = {}", self.eta);
-        println!("  l  = {}", self.l);
-        println!("  l' = {}", self.l_prime);
-
         let m_matrix = <()>::random_matrix(self.k + self.eta, self.k);
-        println!(
-            "  M matrix dimensions: {} × {}",
-            m_matrix.len(),
-            m_matrix[0].len()
-        );
-
         let mac_sk = self.mac.gen_mac();
-
-        println!("x_matrices length = {}", mac_sk.x_matrices.len());
 
         assert_eq!(
             mac_sk.x_matrices.len(),
@@ -179,17 +166,13 @@ impl IBKEM {
 
     // IBKEM2 setup
     pub fn setup2(&self) -> (IBKEMPublicKey, IBKEMSecretKey) {
-        println!("IBKEM2 Setup:");
-
         let (mut pk, sk) = self.setup();
 
         if let Some(qanizk) = &self.qanizk {
-            println!("Generating CRS for IBKEM2...");
             let (crs, _trapdoor) = qanizk.gen_crs(&pk.m_matrix);
             pk.crs = Some(crs);
-            println!("CRS generation completed.");
         } else {
-            println!(" CRS Not generated! ");
+            panic!("Unreachable.")
         }
 
         (pk, sk)
@@ -278,7 +261,6 @@ impl IBKEM {
 
     // IBKEM2 encryption
     pub fn encrypt2(&self, pk: &IBKEMPublicKey, identity: &[u8]) -> (IBKEMCiphertext, GTElement) {
-        println!("IBKEM2 Encrypt for identity: {:?}", identity);
         let r = <()>::random_vector(self.k);
         let c0_g1 = <()>::group_matrix_vector_mul_msm(&pk.m_matrix, &r);
 
@@ -325,7 +307,6 @@ impl IBKEM {
         };
 
         if let (Some(qanizk), Some(crs)) = (&self.qanizk, &pk.crs) {
-            println!("Generating QANIZK proof...");
             // tag (identity || c0)
             let mut tag = Vec::new();
             tag.extend_from_slice(identity);
@@ -337,8 +318,6 @@ impl IBKEM {
 
             let proof = qanizk.prove(crs, &tag, &ciphertext.c0_g1, &r);
             ciphertext.proof = Some(proof);
-
-            println!("QANIZK proof generated successfully.");
         }
 
         (ciphertext, k_gt)
@@ -388,9 +367,7 @@ impl IBKEM {
         identity: &[u8],
         ciphertext: &IBKEMCiphertext,
     ) -> Option<GTElement> {
-        println!("IBKEM2 Decrypt for identity: {:?}", identity);
         if let (Some(qanizk), Some(crs), Some(proof)) = (&self.qanizk, &pk.crs, &ciphertext.proof) {
-            println!("Verifying QANIZK proof...");
             // tag (identity || c0)
             let mut tag = Vec::new();
             tag.extend_from_slice(identity);
@@ -400,10 +377,8 @@ impl IBKEM {
                 tag.extend_from_slice(&affine.y.into_repr().to_bytes_le());
             }
             if !qanizk.verify(crs, &tag, &ciphertext.c0_g1, proof) {
-                println!("QANIZK proof verification failed!");
                 return None;
             }
-            println!("QANIZK proof verification succeeded!");
         }
 
         let mut w_g2 = usk.v_g2.clone();
