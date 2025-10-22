@@ -3,17 +3,17 @@ use crate::group_ctx::*;
 use crate::hashing::*;
 use crate::types::*;
 
-use ark_bls12_381::{G1Affine, G1Projective, G2Projective};
+use ark_bls12_381::{G1Affine, G1Projective as G1, G2Projective as G2};
 use ark_ec::{ProjectiveCurve, msm::VariableBaseMSM};
 use ark_ff::{BigInteger, One, PrimeField, Zero};
 
 pub struct CRS {
-    pub a_g2: Vec<Vec<G2Projective>>,
-    pub ka_g2: Vec<Vec<G2Projective>>,
-    pub b_g1: Vec<Vec<G1Projective>>,
-    pub mk_g1: Vec<Vec<G1Projective>>,
-    pub kjb_a_g2: Vec<Vec<Vec<Vec<G2Projective>>>>,
-    pub b_kjb_g1: Vec<Vec<Vec<Vec<G1Projective>>>>,
+    pub a_g2: Vec<Vec<G2>>,
+    pub ka_g2: Vec<Vec<G2>>,
+    pub b_g1: Vec<Vec<G1>>,
+    pub mk_g1: Vec<Vec<G1>>,
+    pub kjb_a_g2: Vec<Vec<Vec<Vec<G2>>>>,
+    pub b_kjb_g1: Vec<Vec<Vec<Vec<G1>>>>,
 }
 
 pub struct Trapdoor {
@@ -21,8 +21,8 @@ pub struct Trapdoor {
 }
 
 pub struct QANIZKProof {
-    pub t1_g1: Vec<G1Projective>,
-    pub u1_g1: Vec<G1Projective>,
+    pub t1_g1: Vec<G1>,
+    pub u1_g1: Vec<G1>,
 }
 
 pub struct QANIZK {
@@ -40,12 +40,12 @@ impl QANIZK {
         }
     }
 
-    pub fn gen_crs(&self, m1_matrix: &Vec<Vec<G1Projective>>) -> (CRS, Trapdoor) {
+    pub fn gen_crs(&self, m1_matrix: &Vec<Vec<G1>>) -> (CRS, Trapdoor) {
         let a_matrix = random_matrix(self.k + 1, self.k);
         let b_matrix = random_matrix(self.k, self.k);
         let k_matrix = random_matrix(m1_matrix.len(), self.k + 1);
 
-        let a_g2: Vec<Vec<G2Projective>> = a_matrix
+        let a_g2: Vec<Vec<G2>> = a_matrix
             .iter()
             .map(|row| {
                 row.iter()
@@ -56,7 +56,7 @@ impl QANIZK {
 
         let ka_matrix = matrix_multiply(&k_matrix, &a_matrix);
 
-        let ka_g2: Vec<Vec<G2Projective>> = ka_matrix
+        let ka_g2: Vec<Vec<G2>> = ka_matrix
             .iter()
             .map(|row| {
                 row.iter()
@@ -65,7 +65,7 @@ impl QANIZK {
             })
             .collect();
 
-        let b_g1: Vec<Vec<G1Projective>> = b_matrix
+        let b_g1: Vec<Vec<G1>> = b_matrix
             .iter()
             .map(|row| {
                 row.iter()
@@ -88,7 +88,7 @@ impl QANIZK {
                 let kjb_matrix = random_matrix(self.k, self.k + 1);
                 let kjb_a = matrix_multiply(&kjb_matrix, &a_matrix);
 
-                let kjb_row_a_g2: Vec<Vec<G2Projective>> = kjb_a
+                let kjb_row_a_g2: Vec<Vec<G2>> = kjb_a
                     .iter()
                     .map(|row| {
                         row.iter()
@@ -102,7 +102,7 @@ impl QANIZK {
                 let b_transpose = transpose_matrix(&b_matrix);
                 let b_kjb = matrix_multiply(&b_transpose, &kjb_matrix);
 
-                let b_kjb_row_g1: Vec<Vec<G1Projective>> = b_kjb
+                let b_kjb_row_g1: Vec<Vec<G1>> = b_kjb
                     .iter()
                     .map(|row| {
                         row.iter()
@@ -131,7 +131,7 @@ impl QANIZK {
         (crs, trapdoor)
     }
 
-    fn hash_tag_c0_t1(&self, tag: &[u8], c0_g1: &[G1Projective], t1: &[G1Projective]) -> Vec<u8> {
+    fn hash_tag_c0_t1(&self, tag: &[u8], c0_g1: &[G1], t1: &[G1]) -> Vec<u8> {
         let mut input = Vec::new();
 
         input.extend_from_slice(tag);
@@ -152,13 +152,13 @@ impl QANIZK {
     pub fn compute_s_times_b_k_tau(
         &self,
         s: &Vector,
-        b_kjb_g1: &Vec<Vec<Vec<Vec<G1Projective>>>>,
+        b_kjb_g1: &Vec<Vec<Vec<Vec<G1>>>>,
         tau: &Vec<usize>,
-    ) -> Vec<G1Projective> {
+    ) -> Vec<G1> {
         let lambda = tau.len();
         let cols = b_kjb_g1[0][0][0].len();
 
-        let mut result = vec![G1Projective::zero(); cols];
+        let mut result = vec![G1::zero(); cols];
 
         for col in 0..cols {
             let mut bases = Vec::new();
@@ -180,13 +180,7 @@ impl QANIZK {
         result
     }
 
-    pub fn prove(
-        &self,
-        crs: &CRS,
-        tag: &[u8],
-        c0_g1: &Vec<G1Projective>,
-        r: &Vector,
-    ) -> QANIZKProof {
+    pub fn prove(&self, crs: &CRS, tag: &[u8], c0_g1: &Vec<G1>, r: &Vector) -> QANIZKProof {
         let s = random_vector(self.k);
         let t1_g1 = group_matrix_vector_mul_msm(&crs.b_g1, &s);
 
@@ -197,7 +191,7 @@ impl QANIZK {
         let r_mk = group_matrix_vector_mul_msm(&mk_g1_transpose, &r);
         let s_b_k_tau = self.compute_s_times_b_k_tau(&s, &crs.b_kjb_g1, &tau);
 
-        let u1_g1: Vec<G1Projective> = r_mk
+        let u1_g1: Vec<G1> = r_mk
             .iter()
             .zip(s_b_k_tau.iter())
             .map(|(a, b)| *a + *b)
@@ -208,9 +202,9 @@ impl QANIZK {
 
     fn compute_k_tau_a_from_crs(
         &self,
-        kjb_a_g2: &[Vec<Vec<Vec<G2Projective>>>],
+        kjb_a_g2: &[Vec<Vec<Vec<G2>>>],
         tau: &[usize],
-    ) -> Vec<Vec<G2Projective>> {
+    ) -> Vec<Vec<G2>> {
         let lambda = tau.len();
         assert_eq!(
             kjb_a_g2.len(),
@@ -225,7 +219,7 @@ impl QANIZK {
         let rows = kjb_a_g2[0][0].len();
         let cols = kjb_a_g2[0][0][0].len();
 
-        let mut k_tau_a = vec![vec![G2Projective::zero(); cols]; rows];
+        let mut k_tau_a = vec![vec![G2::zero(); cols]; rows];
 
         for j in 0..lambda {
             let tau_j = tau[j];
@@ -242,13 +236,7 @@ impl QANIZK {
         k_tau_a
     }
 
-    pub fn verify(
-        &self,
-        crs: &CRS,
-        tag: &[u8],
-        c0_g1: &Vec<G1Projective>,
-        pie: &QANIZKProof,
-    ) -> bool {
+    pub fn verify(&self, crs: &CRS, tag: &[u8], c0_g1: &Vec<G1>, pie: &QANIZKProof) -> bool {
         let t1_g1 = &pie.t1_g1;
         let u1_g1 = &pie.u1_g1;
 

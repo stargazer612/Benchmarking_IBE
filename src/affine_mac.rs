@@ -2,7 +2,7 @@ use crate::field_utils::*;
 use crate::group_ctx::*;
 use crate::types::*;
 
-use ark_bls12_381::G2Projective;
+use ark_bls12_381::G2Projective as G2;
 use ark_ec::ProjectiveCurve;
 use ark_ff::{One, PrimeField, Zero};
 
@@ -13,8 +13,8 @@ pub struct SecretKey {
 }
 
 pub struct Tag {
-    pub t_g2: Vec<G2Projective>,
-    pub u_g2: Vec<G2Projective>,
+    pub t_g2: Vec<G2>,
+    pub u_g2: Vec<G2>,
     pub t_field: Vector,
 }
 
@@ -113,12 +113,12 @@ impl AffineMAC {
             }
         }
 
-        let t_g2: Vec<G2Projective> = t_field
+        let t_g2: Vec<G2> = t_field
             .clone()
             .into_iter()
             .map(|c| self.group.scalar_mul_p2(c))
             .collect();
-        let u_g2: Vec<G2Projective> = u_field
+        let u_g2: Vec<G2> = u_field
             .into_iter()
             .map(|c| self.group.scalar_mul_p2(c))
             .collect();
@@ -131,14 +131,14 @@ impl AffineMAC {
     }
 
     pub fn verify(&self, sk: &SecretKey, message: &[u8], tag: &Tag) -> bool {
-        let mut expected: Vec<G2Projective> = vec![G2Projective::zero(); 2 * self.k];
+        let mut expected: Vec<G2> = vec![G2::zero(); 2 * self.k];
 
         for i in 0..=self.l {
             let fi = self.f_i(i, message);
             if !fi.is_zero() {
                 let xi = &sk.x_matrices[i];
                 for r in 0..(2 * self.k) {
-                    let mut accum = G2Projective::zero();
+                    let mut accum = G2::zero();
                     for j in 0..self.k {
                         let scalar = xi[r][j] * fi;
                         if !scalar.is_zero() {

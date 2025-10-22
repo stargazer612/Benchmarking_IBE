@@ -1,4 +1,4 @@
-use ark_bls12_381::G1Projective;
+use ark_bls12_381::G1Projective as G1;
 use ibe_schemes::*;
 
 #[test]
@@ -8,7 +8,7 @@ fn qanizk_ok() {
     let qanizk = QANIZK::new(k, lambda);
     let m_matrix = random_matrix(3 * k, k);
 
-    let m_g1_matrix: Vec<Vec<G1Projective>> = m_matrix
+    let m_g1_matrix: Vec<Vec<G1>> = m_matrix
         .iter()
         .map(|row| {
             row.iter()
@@ -23,7 +23,7 @@ fn qanizk_ok() {
     let r = random_vector(k);
     let c0_field = matrix_vector_mul(&m_matrix, &r);
 
-    let c0_g1: Vec<G1Projective> = c0_field
+    let c0_g1: Vec<G1> = c0_field
         .iter()
         .map(|&elem| qanizk.group.scalar_mul_p1(elem))
         .collect();

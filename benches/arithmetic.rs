@@ -2,7 +2,7 @@ use criterion::{Criterion, criterion_group, criterion_main};
 
 use std::hint::black_box as bb;
 
-use ark_bls12_381::{G1Projective, G2Projective};
+use ark_bls12_381::{G1Projective as G1, G2Projective as G2};
 use ibe_schemes::*;
 
 pub fn bench_bls12_381(c: &mut Criterion) {
@@ -157,7 +157,7 @@ pub fn bench_matrix_transpose(c: &mut Criterion) {
 pub fn bench_group_matrix_vector_mul_msm(c: &mut Criterion) {
     let size = 20;
     let group = GroupCtx::bls12_381();
-    let m: Vec<Vec<G1Projective>> = (0..size)
+    let m: Vec<Vec<G1>> = (0..size)
         .map(|_| {
             (0..size)
                 .map(|_| group.scalar_mul_p1(random_field_element()))
@@ -174,7 +174,7 @@ pub fn bench_group_matrix_vector_mul_msm(c: &mut Criterion) {
 pub fn bench_matrix_field_multiply(c: &mut Criterion) {
     let size = 20;
     let group = GroupCtx::bls12_381();
-    let m: Vec<Vec<G1Projective>> = (0..size)
+    let m: Vec<Vec<G1>> = (0..size)
         .map(|_| {
             (0..size)
                 .map(|_| group.scalar_mul_p1(random_field_element()))
@@ -192,7 +192,7 @@ pub fn bench_matrix_field_multiply(c: &mut Criterion) {
 pub fn bench_g1_matrix_transpose(c: &mut Criterion) {
     let size = 20;
     let group = GroupCtx::bls12_381();
-    let m: Vec<Vec<G1Projective>> = (0..size)
+    let m: Vec<Vec<G1>> = (0..size)
         .map(|_| {
             (0..size)
                 .map(|_| group.scalar_mul_p1(random_field_element()))
@@ -208,7 +208,7 @@ pub fn bench_g1_matrix_transpose(c: &mut Criterion) {
 pub fn bench_g2_matrix_transpose(c: &mut Criterion) {
     let size = 20;
     let group = GroupCtx::bls12_381();
-    let m: Vec<Vec<G2Projective>> = (0..size)
+    let m: Vec<Vec<G2>> = (0..size)
         .map(|_| {
             (0..size)
                 .map(|_| group.scalar_mul_p2(random_field_element()))

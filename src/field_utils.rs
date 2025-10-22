@@ -1,4 +1,4 @@
-use ark_bls12_381::{G1Affine, G1Projective, G2Projective};
+use ark_bls12_381::{G1Affine, G1Projective as G1, G2Projective as G2};
 use ark_ec::{ProjectiveCurve, msm::VariableBaseMSM};
 use ark_ff::{PrimeField, UniformRand, Zero};
 use rand::thread_rng;
@@ -95,10 +95,7 @@ pub fn transpose_matrix(matrix: &Matrix<FieldElement>) -> Matrix<FieldElement> {
     result
 }
 
-pub fn group_matrix_vector_mul_msm(
-    matrix_g1: &Vec<Vec<G1Projective>>,
-    vector: &Vector,
-) -> Vec<G1Projective> {
+pub fn group_matrix_vector_mul_msm(matrix_g1: &Vec<Vec<G1>>, vector: &Vector) -> Vec<G1> {
     matrix_g1
         .iter()
         .map(|row| {
@@ -113,9 +110,9 @@ pub fn group_matrix_vector_mul_msm(
 }
 
 pub fn g1_matrix_field_multiply(
-    left_g1: &Vec<Vec<G1Projective>>,
+    left_g1: &Vec<Vec<G1>>,
     right_field: &Matrix<FieldElement>,
-) -> Vec<Vec<G1Projective>> {
+) -> Vec<Vec<G1>> {
     let rows_left = left_g1.len();
     let cols_left = left_g1[0].len();
     let rows_right = right_field.len();
@@ -126,11 +123,11 @@ pub fn g1_matrix_field_multiply(
         "Matrix dimensions don't match for multiplication"
     );
 
-    let mut result = vec![vec![G1Projective::zero(); cols_right]; rows_left];
+    let mut result = vec![vec![G1::zero(); cols_right]; rows_left];
 
     for i in 0..rows_left {
         for j in 0..cols_right {
-            let mut sum = G1Projective::zero();
+            let mut sum = G1::zero();
             for k in 0..cols_left {
                 let scaled = left_g1[i][k].mul(right_field[k][j].into_repr());
                 sum = sum + scaled;
@@ -142,14 +139,14 @@ pub fn g1_matrix_field_multiply(
     result
 }
 
-pub fn transpose_g1_matrix(matrix: &Vec<Vec<G1Projective>>) -> Vec<Vec<G1Projective>> {
+pub fn transpose_g1_matrix(matrix: &Vec<Vec<G1>>) -> Vec<Vec<G1>> {
     if matrix.is_empty() {
         return Vec::new();
     }
 
     let rows = matrix.len();
     let cols = matrix[0].len();
-    let mut transposed = vec![vec![G1Projective::zero(); rows]; cols];
+    let mut transposed = vec![vec![G1::zero(); rows]; cols];
     for i in 0..rows {
         for j in 0..cols {
             transposed[j][i] = matrix[i][j];
@@ -159,14 +156,14 @@ pub fn transpose_g1_matrix(matrix: &Vec<Vec<G1Projective>>) -> Vec<Vec<G1Project
     transposed
 }
 
-pub fn transpose_g2_matrix(matrix: &Vec<Vec<G2Projective>>) -> Vec<Vec<G2Projective>> {
+pub fn transpose_g2_matrix(matrix: &Vec<Vec<G2>>) -> Vec<Vec<G2>> {
     if matrix.is_empty() {
         return Vec::new();
     }
 
     let rows = matrix.len();
     let cols = matrix[0].len();
-    let mut transposed = vec![vec![G2Projective::zero(); rows]; cols];
+    let mut transposed = vec![vec![G2::zero(); rows]; cols];
     for i in 0..rows {
         for j in 0..cols {
             transposed[j][i] = matrix[i][j];

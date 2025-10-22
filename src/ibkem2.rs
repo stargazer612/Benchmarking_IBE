@@ -4,14 +4,14 @@ use crate::group_ctx::*;
 use crate::qanizk::{CRS, QANIZK, QANIZKProof as Proof};
 use crate::types::*;
 
-use ark_bls12_381::{G1Projective, G2Projective};
+use ark_bls12_381::{G1Projective as G1, G2Projective as G2};
 use ark_ec::ProjectiveCurve;
 use ark_ff::{BigInteger, Field, One, PrimeField, Zero};
 
 pub struct IBKEM2PublicKey {
-    pub m_matrix: Vec<Vec<G1Projective>>,
-    pub z_matrices: Vec<Vec<Vec<G1Projective>>>,
-    pub z_prime_vectors: Vec<Vec<G1Projective>>,
+    pub m_matrix: Vec<Vec<G1>>,
+    pub z_matrices: Vec<Vec<Vec<G1>>>,
+    pub z_prime_vectors: Vec<Vec<G1>>,
     pub crs: CRS,
 }
 
@@ -22,14 +22,14 @@ pub struct IBKEM2SecretKey {
 }
 
 pub struct IBKEM2UserSecretKey {
-    pub t_g2: Vec<G2Projective>,
-    pub u_g2: Vec<G2Projective>,
-    pub v_g2: Vec<G2Projective>,
+    pub t_g2: Vec<G2>,
+    pub u_g2: Vec<G2>,
+    pub v_g2: Vec<G2>,
 }
 
 pub struct IBKEM2Ciphertext {
-    pub c0_g1: Vec<G1Projective>,
-    pub c1_g1: Vec<G1Projective>,
+    pub c0_g1: Vec<G1>,
+    pub c1_g1: Vec<G1>,
     pub proof: Proof,
 }
 
@@ -101,7 +101,7 @@ impl IBKEM2 {
             z_prime_vectors.push(z_prime_i);
         }
 
-        let m_g1: Vec<Vec<G1Projective>> = m_matrix
+        let m_g1: Vec<Vec<G1>> = m_matrix
             .iter()
             .map(|row| {
                 row.iter()
@@ -110,7 +110,7 @@ impl IBKEM2 {
             })
             .collect();
 
-        let z_matrices_g1: Vec<Vec<Vec<G1Projective>>> = z_matrices
+        let z_matrices_g1: Vec<Vec<Vec<G1>>> = z_matrices
             .iter()
             .map(|matrix| {
                 matrix
@@ -124,7 +124,7 @@ impl IBKEM2 {
             })
             .collect();
 
-        let z_prime_vectors_g1: Vec<Vec<G1Projective>> = z_prime_vectors
+        let z_prime_vectors_g1: Vec<Vec<G1>> = z_prime_vectors
             .iter()
             .map(|vector| {
                 vector
@@ -190,7 +190,7 @@ impl IBKEM2 {
         let c0_g1 = group_matrix_vector_mul_msm(&pk.m_matrix, &r);
 
         let n = pk.z_matrices[0].len();
-        let mut z_i_sum = vec![vec![G1Projective::zero(); self.k]; n];
+        let mut z_i_sum = vec![vec![G1::zero(); self.k]; n];
 
         for i in 0..=self.l {
             let fi = self.mac.f_i(i, identity);
@@ -209,7 +209,7 @@ impl IBKEM2 {
         for i in 0..=self.l_prime {
             let fi_prime = self.mac.f_prime_i(i, identity);
             if !fi_prime.is_zero() {
-                let mut zi_prime_dot_r = G1Projective::zero();
+                let mut zi_prime_dot_r = G1::zero();
                 for (g1_elem, &r_elem) in pk.z_prime_vectors[i].iter().zip(r.iter()) {
                     zi_prime_dot_r += g1_elem.mul(r_elem.into_repr());
                 }
