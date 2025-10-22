@@ -20,7 +20,19 @@ name = "arithmetic"
 harness = false
 
 [[bench]]
-name = "full-schemes"
+name = "affine-mac"
+harness = false
+
+[[bench]]
+name = "qanizk"
+harness = false
+
+[[bench]]
+name = "ibkem1"
+harness = false
+
+[[bench]]
+name = "ibkem2"
 harness = false
 
 [lib]
