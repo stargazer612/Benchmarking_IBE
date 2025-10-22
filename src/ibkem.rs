@@ -74,7 +74,7 @@ impl IBKEM {
     }
 
     pub fn setup(&self) -> (IBKEMPublicKey, IBKEMSecretKey) {
-        let m_matrix = <()>::random_matrix(self.k + self.eta, self.k);
+        let m_matrix = random_matrix(self.k + self.eta, self.k);
         let mac_sk = self.mac.gen_mac();
 
         assert_eq!(
@@ -87,11 +87,11 @@ impl IBKEM {
         let mut z_matrices = Vec::new();
 
         for i in 0..=self.l {
-            let y_i = <()>::random_matrix(self.k, self.k);
-            let y_i_transposed = ().transpose_matrix(&y_i);
-            let x_i_transposed = ().transpose_matrix(&mac_sk.x_matrices[i]);
-            let combined = ().concatenate_matrices(&y_i_transposed, &x_i_transposed);
-            let z_i = ().matrix_multiply(&combined, &m_matrix);
+            let y_i = random_matrix(self.k, self.k);
+            let y_i_transposed = transpose_matrix(&y_i);
+            let x_i_transposed = transpose_matrix(&mac_sk.x_matrices[i]);
+            let combined = concatenate_matrices(&y_i_transposed, &x_i_transposed);
+            let z_i = matrix_multiply(&combined, &m_matrix);
 
             y_matrices.push(y_i);
             z_matrices.push(z_i);
@@ -101,8 +101,8 @@ impl IBKEM {
         let mut z_prime_vectors = Vec::new();
 
         for i in 0..=self.l_prime {
-            let y_prime_i = <()>::random_vector(self.k);
-            let combined = ().concatenate_vectors(&y_prime_i, &mac_sk.x_prime[i]);
+            let y_prime_i = random_vector(self.k);
+            let combined = concatenate_vectors(&y_prime_i, &mac_sk.x_prime[i]);
 
             assert_eq!(combined.len(), m_matrix.len(), "error :dimension mismatch");
 
@@ -187,17 +187,17 @@ impl IBKEM {
         for i in 0..=self.l {
             let fi = self.mac.f_i(i, identity);
             if !fi.is_zero() {
-                let yi_t = <()>::matrix_vector_mul(&sk.y_matrices[i], &tag.t_field);
-                let scaled = <()>::scalar_vector_mul(fi, &yi_t);
-                v_field = <()>::vector_add(&v_field, &scaled);
+                let yi_t = matrix_vector_mul(&sk.y_matrices[i], &tag.t_field);
+                let scaled = scalar_vector_mul(fi, &yi_t);
+                v_field = vector_add(&v_field, &scaled);
             }
         }
 
         for i in 0..=self.l_prime {
             let fi_prime = self.mac.f_prime_i(i, identity);
             if !fi_prime.is_zero() {
-                let scaled_y_prime = <()>::scalar_vector_mul(fi_prime, &sk.y_prime_vectors[i]);
-                v_field = <()>::vector_add(&v_field, &scaled_y_prime);
+                let scaled_y_prime = scalar_vector_mul(fi_prime, &sk.y_prime_vectors[i]);
+                v_field = vector_add(&v_field, &scaled_y_prime);
             }
         }
 
@@ -214,8 +214,8 @@ impl IBKEM {
     }
 
     pub fn encrypt(&self, pk: &IBKEMPublicKey, identity: &[u8]) -> (IBKEMCiphertext, GTElement) {
-        let r = <()>::random_vector(self.k);
-        let c0_g1 = <()>::group_matrix_vector_mul_msm(&pk.m_matrix, &r);
+        let r = random_vector(self.k);
+        let c0_g1 = group_matrix_vector_mul_msm(&pk.m_matrix, &r);
 
         let n = pk.z_matrices[0].len();
         let mut z_i_sum = vec![vec![G1Projective::zero(); self.k]; n];
@@ -231,7 +231,7 @@ impl IBKEM {
             }
         }
 
-        let c1_g1 = <()>::group_matrix_vector_mul_msm(&z_i_sum, &r);
+        let c1_g1 = group_matrix_vector_mul_msm(&z_i_sum, &r);
 
         let mut pairing_pairs = Vec::new();
 
@@ -263,8 +263,8 @@ impl IBKEM {
 
     // IBKEM2 encryption
     pub fn encrypt2(&self, pk: &IBKEMPublicKey, identity: &[u8]) -> (IBKEMCiphertext, GTElement) {
-        let r = <()>::random_vector(self.k);
-        let c0_g1 = <()>::group_matrix_vector_mul_msm(&pk.m_matrix, &r);
+        let r = random_vector(self.k);
+        let c0_g1 = group_matrix_vector_mul_msm(&pk.m_matrix, &r);
 
         let n = pk.z_matrices[0].len();
         let mut z_i_sum = vec![vec![G1Projective::zero(); self.k]; n];
@@ -280,7 +280,7 @@ impl IBKEM {
             }
         }
 
-        let c1_g1 = <()>::group_matrix_vector_mul_msm(&z_i_sum, &r);
+        let c1_g1 = group_matrix_vector_mul_msm(&z_i_sum, &r);
 
         let mut pairing_pairs = Vec::new();
         for i in 0..=self.l_prime {

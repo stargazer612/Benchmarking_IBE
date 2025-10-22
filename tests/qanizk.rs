@@ -6,7 +6,7 @@ fn qanizk_ok() {
     let k = 2;
     let lambda = 128;
     let qanizk = QANIZK::new(k, lambda);
-    let m_matrix = <()>::random_matrix(3 * k, k);
+    let m_matrix = random_matrix(3 * k, k);
 
     let m_g1_matrix: Vec<Vec<G1Projective>> = m_matrix
         .iter()
@@ -20,8 +20,8 @@ fn qanizk_ok() {
     let (crs, _) = qanizk.gen_crs(&m_g1_matrix);
 
     let tag = generate_random_message_128();
-    let r = <()>::random_vector(k);
-    let c0_field = <()>::matrix_vector_mul(&m_matrix, &r);
+    let r = random_vector(k);
+    let c0_field = matrix_vector_mul(&m_matrix, &r);
 
     let c0_g1: Vec<G1Projective> = c0_field
         .iter()

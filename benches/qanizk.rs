@@ -18,7 +18,7 @@ pub fn bench_qanizk_gen_crs(c: &mut Criterion) {
     let k = 2;
     let lambda = 128;
     let qanizk = QANIZK::new(k, lambda);
-    let m_matrix = <()>::random_matrix(3 * k, k);
+    let m_matrix = random_matrix(3 * k, k);
     let m_g1_matrix: Vec<Vec<G1Projective>> = m_matrix
         .iter()
         .map(|row| {
@@ -37,7 +37,7 @@ pub fn bench_qanizk_prove(c: &mut Criterion) {
     let k = 2;
     let lambda = 128;
     let qanizk = QANIZK::new(k, lambda);
-    let m_matrix = <()>::random_matrix(3 * k, k);
+    let m_matrix = random_matrix(3 * k, k);
     let m_g1_matrix: Vec<Vec<G1Projective>> = m_matrix
         .iter()
         .map(|row| {
@@ -49,8 +49,8 @@ pub fn bench_qanizk_prove(c: &mut Criterion) {
     let (crs, _) = qanizk.gen_crs(&m_g1_matrix);
 
     let tag = generate_random_message_128();
-    let r = <()>::random_vector(k);
-    let c0_field = <()>::matrix_vector_mul(&m_matrix, &r);
+    let r = random_vector(k);
+    let c0_field = matrix_vector_mul(&m_matrix, &r);
     let c0_g1: Vec<G1Projective> = c0_field
         .iter()
         .map(|&elem| qanizk.group.scalar_mul_p1(elem))
@@ -65,7 +65,7 @@ pub fn bench_qanizk_verify(c: &mut Criterion) {
     let k = 2;
     let lambda = 128;
     let qanizk = QANIZK::new(k, lambda);
-    let m_matrix = <()>::random_matrix(3 * k, k);
+    let m_matrix = random_matrix(3 * k, k);
     let m_g1_matrix: Vec<Vec<G1Projective>> = m_matrix
         .iter()
         .map(|row| {
@@ -77,8 +77,8 @@ pub fn bench_qanizk_verify(c: &mut Criterion) {
     let (crs, _) = qanizk.gen_crs(&m_g1_matrix);
 
     let tag = generate_random_message_128();
-    let r = <()>::random_vector(k);
-    let c0_field = <()>::matrix_vector_mul(&m_matrix, &r);
+    let r = random_vector(k);
+    let c0_field = matrix_vector_mul(&m_matrix, &r);
     let c0_g1: Vec<G1Projective> = c0_field
         .iter()
         .map(|&elem| qanizk.group.scalar_mul_p1(elem))

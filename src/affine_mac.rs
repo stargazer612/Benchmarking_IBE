@@ -35,14 +35,14 @@ impl AffineMAC {
     }
 
     pub fn gen_mac(&self) -> SecretKey {
-        let b = <()>::random_matrix(self.k, self.k);
+        let b = random_matrix(self.k, self.k);
         let mut x_matrices = Vec::with_capacity(self.l + 1);
         for _ in 0..=self.l {
-            x_matrices.push(<()>::random_matrix(2 * self.k, self.k));
+            x_matrices.push(random_matrix(2 * self.k, self.k));
         }
         let mut x_prime = Vec::with_capacity(self.l_prime + 1);
         for _ in 0..=self.l_prime {
-            x_prime.push(<()>::random_vector(2 * self.k));
+            x_prime.push(random_vector(2 * self.k));
         }
         SecretKey {
             b,
@@ -89,17 +89,17 @@ impl AffineMAC {
     }
 
     pub fn tag(&self, sk: &SecretKey, message: &[u8]) -> Tag {
-        let s = <()>::random_vector(self.k);
-        let t_field = <()>::matrix_vector_mul(&sk.b, &s);
+        let s = random_vector(self.k);
+        let t_field = matrix_vector_mul(&sk.b, &s);
 
         let mut u_field: Vector = vec![FieldElement::zero(); 2 * self.k];
 
         for i in 0..=self.l {
             let fi = self.f_i(i, message);
             if !fi.is_zero() {
-                let xi_t = <()>::matrix_vector_mul(&sk.x_matrices[i], &t_field);
-                let scaled = <()>::scalar_vector_mul(fi, &xi_t);
-                u_field = <()>::vector_add(&u_field, &scaled);
+                let xi_t = matrix_vector_mul(&sk.x_matrices[i], &t_field);
+                let scaled = scalar_vector_mul(fi, &xi_t);
+                u_field = vector_add(&u_field, &scaled);
             }
         }
 
@@ -107,8 +107,8 @@ impl AffineMAC {
         for i in 0..=self.l_prime {
             let fi_prime = self.f_prime_i(i, message);
             if !fi_prime.is_zero() {
-                let scaled_xprime = <()>::scalar_vector_mul(f0, &sk.x_prime[i]);
-                u_field = <()>::vector_add(&u_field, &scaled_xprime);
+                let scaled_xprime = scalar_vector_mul(f0, &sk.x_prime[i]);
+                u_field = vector_add(&u_field, &scaled_xprime);
             }
         }
 
