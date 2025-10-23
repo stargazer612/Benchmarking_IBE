@@ -32,8 +32,7 @@ pub struct IBKEM1Ciphertext {
 
 pub struct IBKEM1 {
     pub k: usize,
-    pub eta: usize, // eta = 2*k
-    pub l: usize,   // 2*len + 1
+    pub l: usize, // 2*len + 1
     pub l_prime: usize,
     pub mac: AffineMAC,
     pub group: GroupCtx,
@@ -41,10 +40,8 @@ pub struct IBKEM1 {
 
 impl IBKEM1 {
     pub fn new(k: usize, l: usize, l_prime: usize) -> Self {
-        let eta = 2 * k;
         Self {
             k,
-            eta,
             l,
             l_prime,
             mac: AffineMAC::new(k, l, l_prime),
@@ -53,7 +50,8 @@ impl IBKEM1 {
     }
 
     pub fn setup(&self) -> (IBKEM1PublicKey, IBKEM1SecretKey) {
-        let m_matrix = random_matrix(self.k + self.eta, self.k);
+        let eta = 2 * self.k;
+        let m_matrix = random_matrix(self.k + eta, self.k);
         let mac_sk = self.mac.gen_mac();
 
         assert_eq!(
