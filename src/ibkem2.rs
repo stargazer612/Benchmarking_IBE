@@ -68,7 +68,7 @@ impl IBKEM2 {
             let y_i = random_matrix(self.k, self.k);
             let y_i_transposed = matrix_transpose(&y_i);
             let x_i_transposed = matrix_transpose(&mac_sk.x_matrices[i]);
-            let combined = concatenate_matrices(&y_i_transposed, &x_i_transposed);
+            let combined = matrix_concat(&y_i_transposed, &x_i_transposed);
             let z_i = matrix_multiply(&combined, &m_matrix);
 
             y_matrices.push(y_i);
@@ -80,7 +80,7 @@ impl IBKEM2 {
 
         for i in 0..=self.l_prime {
             let y_prime_i = random_vector(self.k);
-            let combined = concatenate_vectors(&y_prime_i, &mac_sk.x_prime[i]);
+            let combined = vector_concat(&y_prime_i, &mac_sk.x_prime[i]);
 
             assert_eq!(combined.len(), m_matrix.len());
 

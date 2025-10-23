@@ -84,10 +84,7 @@ pub fn matrix_lift_g2(m: &Matrix<FieldElement>, group: &GroupCtx) -> Matrix<G2> 
         .collect()
 }
 
-pub fn concatenate_matrices(
-    a: &Matrix<FieldElement>,
-    b: &Matrix<FieldElement>,
-) -> Matrix<FieldElement> {
+pub fn matrix_concat<T: Copy>(a: &Matrix<T>, b: &Matrix<T>) -> Matrix<T> {
     assert_eq!(a.len(), b.len());
     let mut result = Vec::with_capacity(a.len());
     for i in 0..a.len() {
@@ -98,7 +95,7 @@ pub fn concatenate_matrices(
     result
 }
 
-pub fn concatenate_vectors(a: &Vector, b: &Vector) -> Vector {
+pub fn vector_concat(a: &Vector, b: &Vector) -> Vector {
     let mut result = a.clone();
     result.extend_from_slice(b);
     result

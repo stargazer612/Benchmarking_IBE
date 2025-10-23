@@ -110,7 +110,7 @@ pub fn bench_vector_concat(c: &mut Criterion) {
     let w = random_vector(size);
 
     c.bench_function("vector_concat (100)", |b| {
-        b.iter(|| concatenate_vectors(bb(&v), bb(&w)))
+        b.iter(|| vector_concat(bb(&v), bb(&w)))
     });
 }
 
@@ -140,7 +140,7 @@ pub fn bench_matrix_concat(c: &mut Criterion) {
     let n = random_matrix(size, size);
 
     c.bench_function("matrix_concat (50)", |b| {
-        b.iter(|| concatenate_matrices(bb(&m), bb(&n)))
+        b.iter(|| matrix_concat(bb(&m), bb(&n)))
     });
 }
 
