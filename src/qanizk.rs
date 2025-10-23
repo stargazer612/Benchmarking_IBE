@@ -27,15 +27,15 @@ pub struct QANIZKProof {
 
 pub struct QANIZK {
     pub k: usize,
-    pub lamda: usize,
+    pub lambda: usize,
     pub group: GroupCtx,
 }
 
 impl QANIZK {
-    pub fn new(k: usize, lamda: usize) -> Self {
+    pub fn new(k: usize, lambda: usize) -> Self {
         Self {
             k,
-            lamda,
+            lambda,
             group: GroupCtx::bls12_381(),
         }
     }
@@ -56,7 +56,7 @@ impl QANIZK {
         let mut kjb_a_g2 = Vec::new();
         let mut b_kjb_g1 = Vec::new();
 
-        for _j in 0..self.lamda {
+        for _j in 0..self.lambda {
             let mut kjb_row_a = Vec::new();
             let mut b_kjb_row = Vec::new();
 
@@ -143,7 +143,7 @@ impl QANIZK {
         let t1_g1 = group_matrix_vector_mul_msm(&crs.b_g1, &s);
 
         let hash_input = self.hash_tag_c0_t1(tag, c0_g1, &t1_g1);
-        let tau = blake3_hash_to_bits(&hash_input, self.lamda);
+        let tau = blake3_hash_to_bits(&hash_input, self.lambda);
 
         let mk_g1_transpose = matrix_transpose(&crs.mk_g1);
         let r_mk = group_matrix_vector_mul_msm(&mk_g1_transpose, &r);
@@ -195,7 +195,7 @@ impl QANIZK {
         let u1_g1 = &pie.u1_g1;
 
         let hash_input = self.hash_tag_c0_t1(tag, c0_g1, t1_g1);
-        let tau = blake3_hash_to_bits(&hash_input, self.lamda);
+        let tau = blake3_hash_to_bits(&hash_input, self.lambda);
 
         if u1_g1.len() != self.k + 1 {
             panic!("u1_g1 length != k + 1");
@@ -220,11 +220,11 @@ impl QANIZK {
             return false;
         }
 
-        if tau.len() != self.lamda {
+        if tau.len() != self.lambda {
             panic!("tau length != lambda");
         }
 
-        if crs.kjb_a_g2.len() != self.lamda {
+        if crs.kjb_a_g2.len() != self.lambda {
             panic!("kjb_a_g2 length != lambda");
         }
 
