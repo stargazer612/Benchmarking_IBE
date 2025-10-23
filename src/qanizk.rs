@@ -7,6 +7,8 @@ use ark_bls12_381::{G1Affine, G1Projective as G1, G2Projective as G2};
 use ark_ec::{ProjectiveCurve, msm::VariableBaseMSM};
 use ark_ff::{BigInteger, One, PrimeField};
 
+use bit_vec::BitVec;
+
 pub struct CRS {
     pub a_g2: Matrix<G2>,
     pub ka_g2: Matrix<G2>,
@@ -111,7 +113,7 @@ impl QANIZK {
         &self,
         s: &Vector,
         b_kjb_g1: &Vec<Vec<Matrix<G1>>>,
-        tau: &Vec<usize>,
+        tau: &BitVec,
     ) -> Vec<G1> {
         let lambda = tau.len();
         let cols = b_kjb_g1[0][0][0].len();
@@ -123,7 +125,7 @@ impl QANIZK {
             let mut scalars = Vec::with_capacity(lambda * s.len());
 
             for j in 0..lambda {
-                let tau_j = tau[j];
+                let tau_j = tau[j] as usize;
                 for row in 0..s.len() {
                     bases.push(b_kjb_g1[j][tau_j][row][col]);
                     scalars.push(s[row]);
@@ -154,7 +156,7 @@ impl QANIZK {
         QANIZKProof { t1_g1, u1_g1 }
     }
 
-    fn compute_k_tau_a_from_crs(&self, kjb_a_g2: &[Vec<Matrix<G2>>], tau: &[usize]) -> Matrix<G2> {
+    fn compute_k_tau_a_from_crs(&self, kjb_a_g2: &[Vec<Matrix<G2>>], tau: &BitVec) -> Matrix<G2> {
         let lambda = tau.len();
         assert_eq!(kjb_a_g2.len(), lambda);
         assert_ne!(lambda, 0);
@@ -164,8 +166,7 @@ impl QANIZK {
 
         let mut k_tau_a = matrix_zero::<G2>(rows, cols);
         for j in 0..lambda {
-            let tau_j = tau[j];
-            assert!(tau_j <= 1);
+            let tau_j = tau[j] as usize;
             let kj_tauj_a = &kjb_a_g2[j][tau_j];
             k_tau_a = matrix_add_g2(&k_tau_a, kj_tauj_a);
         }

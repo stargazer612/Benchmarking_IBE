@@ -1,23 +1,13 @@
+use bit_vec::BitVec;
 use blake3;
 use rand::Rng;
 
-pub fn blake3_hash_to_bits(input: &[u8], num_bits: usize) -> Vec<usize> {
+pub fn blake3_hash_to_bits(input: &[u8], num_bits: usize) -> BitVec {
+    assert!(num_bits <= 256);
     let hash = blake3::hash(input);
     let hash_bytes = hash.as_bytes();
-    let mut bits = Vec::with_capacity(num_bits);
-
-    for i in 0..num_bits {
-        let byte_idx = i / 8;
-        let bit_idx = i % 8;
-
-        if byte_idx < hash_bytes.len() {
-            let bit = (hash_bytes[byte_idx] >> bit_idx) & 1;
-            bits.push(bit as usize);
-        } else {
-            bits.push(0);
-        }
-    }
-
+    let mut bits = BitVec::from_bytes(hash_bytes);
+    bits.truncate(num_bits);
     bits
 }
 
@@ -58,17 +48,6 @@ pub fn generate_random_email() -> Vec<u8> {
 pub fn generate_email_and_hash_identity(bits: usize) -> (Vec<u8>, Vec<u8>) {
     let email = generate_random_email();
     let hash_bits = blake3_hash_to_bits(&email, bits);
-
-    let mut identity = Vec::new();
-    for chunk in hash_bits.chunks(8) {
-        let mut byte = 0u8;
-        for (i, &bit) in chunk.iter().enumerate() {
-            if bit == 1 {
-                byte |= 1 << i;
-            }
-        }
-        identity.push(byte);
-    }
-
+    let identity = hash_bits.to_bytes();
     (email, identity)
 }
