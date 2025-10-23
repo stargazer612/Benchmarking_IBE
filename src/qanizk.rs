@@ -165,10 +165,7 @@ impl QANIZK {
             lambda,
             "kjb_a_g2 length must match tau length"
         );
-
-        if lambda == 0 {
-            panic!("Lambda is 0, returning zero matrix");
-        }
+        assert_ne!(lambda, 0);
 
         let rows = kjb_a_g2[0][0].len();
         let cols = kjb_a_g2[0][0][0].len();
@@ -190,78 +187,44 @@ impl QANIZK {
         k_tau_a
     }
 
-    pub fn verify(&self, crs: &CRS, tag: &[u8], c0_g1: &Vec<G1>, pie: &QANIZKProof) -> bool {
-        let t1_g1 = &pie.t1_g1;
-        let u1_g1 = &pie.u1_g1;
+    pub fn verify(&self, crs: &CRS, tag: &[u8], c0_g1: &Vec<G1>, pi: &QANIZKProof) -> bool {
+        let t1_g1 = &pi.t1_g1;
+        let u1_g1 = &pi.u1_g1;
 
         let hash_input = self.hash_tag_c0_t1(tag, c0_g1, t1_g1);
         let tau = blake3_hash_to_bits(&hash_input, self.lambda);
 
-        if u1_g1.len() != self.k + 1 {
-            panic!("u1_g1 length != k + 1");
-        }
-
-        if t1_g1.len() != self.k {
-            panic!("t1_g1 length != k");
-        }
-
-        if c0_g1.len() != crs.ka_g2.len() {
-            panic!("c0_g1 length != ka_g2 rows");
-        }
+        assert_eq!(u1_g1.len(), self.k + 1);
+        assert_eq!(t1_g1.len(), self.k);
+        assert_eq!(c0_g1.len(), crs.ka_g2.len());
+        assert_eq!(tau.len(), self.lambda);
+        assert_eq!(crs.kjb_a_g2.len(), self.lambda);
+        assert_eq!(crs.a_g2.len(), self.k + 1);
+        assert_eq!(crs.a_g2[0].len(), self.k);
 
         let k_tau_a = self.compute_k_tau_a_from_crs(&crs.kjb_a_g2, &tau);
-        let dimensions_consistent = u1_g1.len() == self.k + 1
-            && t1_g1.len() == self.k
-            && c0_g1.len() == crs.ka_g2.len()
-            && crs.a_g2.len() == self.k + 1
-            && crs.a_g2[0].len() == self.k;
-
-        if !dimensions_consistent {
-            return false;
-        }
-
-        if tau.len() != self.lambda {
-            panic!("tau length != lambda");
-        }
-
-        if crs.kjb_a_g2.len() != self.lambda {
-            panic!("kjb_a_g2 length != lambda");
-        }
 
         let mut all_pairings = Vec::new();
         for (i, &u1_elem) in u1_g1.iter().enumerate() {
-            if i < crs.a_g2.len() {
-                for (_, &a_elem) in crs.a_g2[i].iter().enumerate() {
-                    all_pairings.push((u1_elem, a_elem));
-                }
+            for &a_elem in crs.a_g2[i].iter() {
+                all_pairings.push((u1_elem, a_elem));
             }
         }
 
         for (i, &c0_elem) in c0_g1.iter().enumerate() {
-            if i < crs.ka_g2.len() {
-                for (_, &ka_elem) in crs.ka_g2[i].iter().enumerate() {
-                    all_pairings.push((-c0_elem, ka_elem));
-                }
+            for &ka_elem in crs.ka_g2[i].iter() {
+                all_pairings.push((-c0_elem, ka_elem));
             }
         }
-        if k_tau_a.len() == t1_g1.len() {
-            for (i, &t1_elem) in t1_g1.iter().enumerate() {
-                if i < k_tau_a.len() {
-                    for (_, &ktau_elem) in k_tau_a[i].iter().enumerate() {
-                        all_pairings.push((-t1_elem, ktau_elem));
-                    }
-                }
+
+        assert_eq!(k_tau_a.len(), t1_g1.len());
+        for (i, &t1_elem) in t1_g1.iter().enumerate() {
+            for &ktau_elem in k_tau_a[i].iter() {
+                all_pairings.push((-t1_elem, ktau_elem));
             }
-        } else {
-            panic!("K_tau A dimensions incompatbiel with t1");
         }
 
-        if all_pairings.is_empty() {
-            panic!("no pairings to compute");
-        }
-
-        let result_gt = self.group.multi_pairing(&all_pairings);
-
-        result_gt == GTElement::one()
+        assert!(!all_pairings.is_empty());
+        self.group.multi_pairing(&all_pairings) == GTElement::one()
     }
 }
