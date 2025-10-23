@@ -162,11 +162,8 @@ impl IBKEM2 {
         for i in 0..=self.l {
             let fi = self.mac.f_i(i, identity);
             if !fi.is_zero() {
-                for row in 0..n {
-                    for col in 0..self.k {
-                        z_i_sum[row][col] += pk.z_matrices[i][row][col].mul(fi.into_repr());
-                    }
-                }
+                let tmp = matrix_multiply_scalar(&pk.z_matrices[i], fi);
+                z_i_sum = matrix_add_g1(&z_i_sum, &tmp);
             }
         }
 

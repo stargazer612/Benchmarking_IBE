@@ -60,7 +60,38 @@ pub fn matrix_multiply(a: &Matrix<FieldElement>, b: &Matrix<FieldElement>) -> Ma
     result
 }
 
-pub fn matrix_add(a: &Matrix<G2>, b: &Matrix<G2>) -> Matrix<G2> {
+pub fn matrix_multiply_scalar(a: &Matrix<G1>, x: FieldElement) -> Matrix<G1> {
+    assert!(!a.is_empty());
+    assert!(!a[0].is_empty());
+    let rows = a.len();
+    let cols = a[0].len();
+    let mut result = matrix_zero::<G1>(rows, cols);
+    for i in 0..rows {
+        for j in 0..cols {
+            result[i][j] = a[i][j].mul(x.into_repr());
+        }
+    }
+    result
+}
+
+pub fn matrix_add_g1(a: &Matrix<G1>, b: &Matrix<G1>) -> Matrix<G1> {
+    let rows_a = a.len();
+    let cols_a = a[0].len();
+    let rows_b = b.len();
+    let cols_b = b[0].len();
+    assert_eq!(rows_a, rows_b);
+    assert_eq!(cols_a, cols_b);
+
+    let mut result = matrix_zero::<G1>(rows_a, cols_a);
+    for i in 0..rows_a {
+        for j in 0..cols_a {
+            result[i][j] = a[i][j] + b[i][j];
+        }
+    }
+    result
+}
+
+pub fn matrix_add_g2(a: &Matrix<G2>, b: &Matrix<G2>) -> Matrix<G2> {
     let rows_a = a.len();
     let cols_a = a[0].len();
     let rows_b = b.len();
