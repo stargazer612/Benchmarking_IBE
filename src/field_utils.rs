@@ -60,6 +60,23 @@ pub fn matrix_multiply(a: &Matrix<FieldElement>, b: &Matrix<FieldElement>) -> Ma
     result
 }
 
+pub fn matrix_add(a: &Matrix<G2>, b: &Matrix<G2>) -> Matrix<G2> {
+    let rows_a = a.len();
+    let cols_a = a[0].len();
+    let rows_b = b.len();
+    let cols_b = b[0].len();
+    assert_eq!(rows_a, rows_b);
+    assert_eq!(cols_a, cols_b);
+
+    let mut result = matrix_zero::<G2>(rows_a, cols_a);
+    for i in 0..rows_a {
+        for j in 0..cols_a {
+            result[i][j] = a[i][j] + b[i][j];
+        }
+    }
+    result
+}
+
 pub fn matrix_zero<T: Zero + Copy>(rows: usize, cols: usize) -> Matrix<T> {
     vec![vec![T::zero(); cols]; rows]
 }

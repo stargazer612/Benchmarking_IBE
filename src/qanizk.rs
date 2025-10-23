@@ -163,18 +163,11 @@ impl QANIZK {
         let cols = kjb_a_g2[0][0][0].len();
 
         let mut k_tau_a = matrix_zero::<G2>(rows, cols);
-
         for j in 0..lambda {
             let tau_j = tau[j];
             assert!(tau_j <= 1);
-
             let kj_tauj_a = &kjb_a_g2[j][tau_j];
-
-            for row in 0..rows {
-                for col in 0..cols {
-                    k_tau_a[row][col] = k_tau_a[row][col] + kj_tauj_a[row][col];
-                }
-            }
+            k_tau_a = matrix_add(&k_tau_a, kj_tauj_a);
         }
         k_tau_a
     }
