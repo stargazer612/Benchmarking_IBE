@@ -162,7 +162,7 @@ impl QANIZK {
         let rows = kjb_a_g2[0][0].len();
         let cols = kjb_a_g2[0][0][0].len();
 
-        let mut k_tau_a = vec![vec![G2::zero(); cols]; rows];
+        let mut k_tau_a = matrix_zero::<G2>(rows, cols);
 
         for j in 0..lambda {
             let tau_j = tau[j];

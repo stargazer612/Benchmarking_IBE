@@ -157,7 +157,7 @@ impl IBKEM2 {
         let c0_g1 = group_matrix_vector_mul_msm(&pk.m_matrix, &r);
 
         let n = pk.z_matrices[0].len();
-        let mut z_i_sum = vec![vec![G1::zero(); self.k]; n];
+        let mut z_i_sum = matrix_zero::<G1>(n, self.k);
 
         for i in 0..=self.l {
             let fi = self.mac.f_i(i, identity);

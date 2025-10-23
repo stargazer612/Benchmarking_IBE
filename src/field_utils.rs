@@ -49,7 +49,7 @@ pub fn matrix_multiply(a: &Matrix<FieldElement>, b: &Matrix<FieldElement>) -> Ma
     let cols_b = b[0].len();
     assert_eq!(cols_a, b.len());
 
-    let mut result = vec![vec![FieldElement::zero(); cols_b]; rows_a];
+    let mut result = matrix_zero::<FieldElement>(rows_a, cols_b);
     for i in 0..rows_a {
         for j in 0..cols_b {
             for k in 0..cols_a {
@@ -58,6 +58,10 @@ pub fn matrix_multiply(a: &Matrix<FieldElement>, b: &Matrix<FieldElement>) -> Ma
         }
     }
     result
+}
+
+pub fn matrix_zero<T: Zero + Copy>(rows: usize, cols: usize) -> Matrix<T> {
+    vec![vec![T::zero(); cols]; rows]
 }
 
 pub fn vector_lift_g1(v: &Vector, group: &GroupCtx) -> Vec<G1> {
@@ -105,7 +109,7 @@ pub fn matrix_transpose<T: Zero + Copy>(matrix: &Matrix<T>) -> Matrix<T> {
 
     let rows = matrix.len();
     let cols = matrix[0].len();
-    let mut result = vec![vec![T::zero(); rows]; cols];
+    let mut result = matrix_zero::<T>(cols, rows);
     for i in 0..rows {
         for j in 0..cols {
             result[j][i] = matrix[i][j];
@@ -139,7 +143,7 @@ pub fn g1_matrix_field_multiply(
 
     assert_eq!(cols_left, rows_right);
 
-    let mut result = vec![vec![G1::zero(); cols_right]; rows_left];
+    let mut result = matrix_zero::<G1>(rows_left, cols_right);
 
     for i in 0..rows_left {
         for j in 0..cols_right {
