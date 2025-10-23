@@ -146,10 +146,8 @@ impl AffineMAC {
         for i in 0..=self.l_prime {
             let fi_prime = self.f_prime_i(i, message);
             if !fi_prime.is_zero() {
-                let row_vec = &sk.x_prime[i]; // length 2k
-                if row_vec.len() != 2 * self.k {
-                    return false;
-                }
+                let row_vec = &sk.x_prime[i];
+                assert_eq!(row_vec.len(), 2 * self.k);
                 for r in 0..(2 * self.k) {
                     let coeff = fi_prime * row_vec[r];
                     if !coeff.is_zero() {
@@ -159,15 +157,7 @@ impl AffineMAC {
             }
         }
 
-        if expected.len() != tag.u_g2.len() {
-            return false;
-        }
-
-        for (e, u) in expected.iter().zip(tag.u_g2.iter()) {
-            if e != u {
-                return false;
-            }
-        }
-        true
+        assert_eq!(expected.len(), tag.u_g2.len());
+        expected.iter().zip(tag.u_g2.iter()).all(|(e, u)| e == u)
     }
 }
