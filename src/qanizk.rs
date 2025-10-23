@@ -149,11 +149,7 @@ impl QANIZK {
         let r_mk = group_matrix_vector_mul_msm(&mk_g1_transpose, &r);
         let s_b_k_tau = self.compute_s_times_b_k_tau(&s, &crs.b_kjb_g1, &tau);
 
-        let u1_g1: Vec<G1> = r_mk
-            .iter()
-            .zip(s_b_k_tau.iter())
-            .map(|(a, b)| *a + *b)
-            .collect();
+        let u1_g1 = vector_add_g1(&r_mk, &s_b_k_tau);
 
         QANIZKProof { t1_g1, u1_g1 }
     }

@@ -35,6 +35,10 @@ pub fn vector_add(a: &Vector, b: &Vector) -> Vector {
     a.iter().zip(b.iter()).map(|(&x, &y)| x + y).collect()
 }
 
+pub fn vector_add_g1(a: &Vec<G1>, b: &Vec<G1>) -> Vec<G1> {
+    a.iter().zip(b.iter()).map(|(x, y)| *x + *y).collect()
+}
+
 pub fn scalar_vector_mul(scalar: FieldElement, vector: &Vector) -> Vector {
     vector.iter().map(|&x| scalar * x).collect()
 }
