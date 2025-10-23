@@ -173,11 +173,7 @@ impl IBKEM2 {
         for i in 0..=self.l_prime {
             let fi_prime = self.mac.f_prime_i(i, identity);
             if !fi_prime.is_zero() {
-                let mut zi_prime_dot_r = G1::zero();
-                for (g1_elem, &r_elem) in pk.z_prime_vectors[i].iter().zip(r.iter()) {
-                    zi_prime_dot_r += g1_elem.mul(r_elem.into_repr());
-                }
-                // fi' * (z_i' * r)
+                let zi_prime_dot_r = vector_dot_g1(&r, &pk.z_prime_vectors[i]);
                 let scaling = zi_prime_dot_r.mul(fi_prime.into_repr());
                 pairing_pairs.push((scaling, self.group.p2.clone()));
             }

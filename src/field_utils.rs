@@ -39,6 +39,15 @@ pub fn vector_add_g1(a: &Vec<G1>, b: &Vec<G1>) -> Vec<G1> {
     a.iter().zip(b.iter()).map(|(x, y)| *x + *y).collect()
 }
 
+pub fn vector_dot_g1(a: &Vector, b: &Vec<G1>) -> G1 {
+    assert_eq!(a.len(), b.len());
+    let mut sum = G1::zero();
+    for i in 0..a.len() {
+        sum += b[i].mul(a[i].into_repr());
+    }
+    sum
+}
+
 pub fn scalar_vector_mul(scalar: FieldElement, vector: &Vector) -> Vector {
     vector.iter().map(|&x| scalar * x).collect()
 }
