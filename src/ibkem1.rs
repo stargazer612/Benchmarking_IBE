@@ -5,7 +5,7 @@ use crate::types::*;
 
 use ark_bls12_381::{G1Projective as G1, G2Projective as G2};
 use ark_ec::ProjectiveCurve;
-use ark_ff::{Field, One, PrimeField, Zero};
+use ark_ff::{One, PrimeField, Zero};
 
 pub struct IBKEM1PublicKey {
     pub m_matrix: Matrix<G1>,
@@ -188,39 +188,25 @@ impl IBKEM1 {
         (ciphertext, k_gt)
     }
 
-    pub fn decrypt(
-        &self,
-        usk: &IBKEM1UserSecretKey,
-        _identity: &[u8],
-        ciphertext: &IBKEM1Ciphertext,
-    ) -> Option<GTElement> {
+    pub fn decrypt(&self, usk: &IBKEM1UserSecretKey, ciphertext: &IBKEM1Ciphertext) -> GTElement {
         let mut w_g2 = usk.v_g2.clone();
         w_g2.extend_from_slice(&usk.u_g2);
 
-        let c0_g1_len = ciphertext.c0_g1.len();
-        let c1_g1_len = ciphertext.c1_g1.len();
+        let c0_g1 = &ciphertext.c0_g1;
+        let c1_g1 = &ciphertext.c1_g1;
+        assert_ne!(c0_g1.len(), 0);
+        assert_ne!(c1_g1.len(), 0);
+        assert_eq!(c0_g1.len(), w_g2.len());
+        assert_eq!(c1_g1.len(), usk.t_g2.len());
 
-        if c0_g1_len == 0 || c1_g1_len == 0 {
-            return None;
-        }
-
-        let first_term: Vec<_> = (0..c0_g1_len)
-            .map(|i| (ciphertext.c0_g1[i].clone(), w_g2[i].clone()))
+        let first_term: Vec<_> = (0..c0_g1.len())
+            .map(|i| (c0_g1[i].clone(), w_g2[i].clone()))
             .collect();
 
-        let second_term: Vec<_> = (0..c1_g1_len)
-            .map(|i| (ciphertext.c1_g1[i].clone(), usk.t_g2[i].clone()))
+        let second_term: Vec<_> = (0..c1_g1.len())
+            .map(|i| (c1_g1[i].clone(), usk.t_g2[i].clone()))
             .collect();
 
-        let result1 = self.group.multi_pairing(&first_term);
-        let result2 = self.group.multi_pairing(&second_term);
-
-        // K = first_term - second_term = result1 * result2^(-1)
-        let inverse_exist = result2.inverse();
-        if let Some(neg_inv) = inverse_exist {
-            Some(result1 * neg_inv)
-        } else {
-            None
-        }
+        self.group.multi_pairing(&first_term) / self.group.multi_pairing(&second_term)
     }
 }

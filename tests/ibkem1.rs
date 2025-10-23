@@ -11,9 +11,9 @@ fn test_ibkem1_ok() {
 
     let usk = ibkem.extract(&sk, &identity);
     let (ct, k) = ibkem.encrypt(&pk, &identity);
-    let k_dec = ibkem.decrypt(&usk, &identity, &ct);
+    let k_dec = ibkem.decrypt(&usk, &ct);
 
-    assert!(k_dec.is_some_and(|k_dec| k_dec == k))
+    assert_eq!(k_dec, k)
 }
 
 #[test]
@@ -28,7 +28,7 @@ fn test_ibkem1_fail() {
 
     let (_, new_identity) = generate_email_and_hash_identity(128);
     let new_usk = ibkem.extract(&sk, &new_identity);
-    let k_dec = ibkem.decrypt(&new_usk, &new_identity, &ct);
+    let k_dec = ibkem.decrypt(&new_usk, &ct);
 
-    assert!(k_dec.is_some_and(|k_dec| k_dec != k));
+    assert_ne!(k_dec, k);
 }

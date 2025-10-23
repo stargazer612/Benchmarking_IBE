@@ -55,7 +55,7 @@ pub fn bench_ibkem1_decrypt(c: &mut Criterion) {
     let (ct, _) = ibkem.encrypt(&pk, &identity);
 
     c.bench_function("ibkem1_decrypt (128)", |b| {
-        b.iter(|| ibkem.decrypt(bb(&usk), bb(&identity), bb(&ct)))
+        b.iter(|| ibkem.decrypt(bb(&usk), bb(&ct)))
     });
 }
 
