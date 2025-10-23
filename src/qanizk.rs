@@ -5,7 +5,7 @@ use crate::types::*;
 
 use ark_bls12_381::{G1Affine, G1Projective as G1, G2Projective as G2};
 use ark_ec::{ProjectiveCurve, msm::VariableBaseMSM};
-use ark_ff::{BigInteger, One, PrimeField, Zero};
+use ark_ff::{BigInteger, One, PrimeField};
 
 pub struct CRS {
     pub a_g2: Matrix<G2>,
@@ -116,7 +116,7 @@ impl QANIZK {
         let lambda = tau.len();
         let cols = b_kjb_g1[0][0][0].len();
 
-        let mut result = vec![G1::zero(); cols];
+        let mut result = vector_zero::<G1>(cols);
 
         for col in 0..cols {
             let mut bases = Vec::with_capacity(lambda * s.len());

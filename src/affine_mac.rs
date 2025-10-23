@@ -93,7 +93,7 @@ impl AffineMAC {
         let s = random_vector(self.k);
         let t_field = matrix_vector_mul(&sk.b, &s);
 
-        let mut u_field: Vector = vec![FieldElement::zero(); 2 * self.k];
+        let mut u_field = vector_zero::<FieldElement>(2 * self.k);
 
         for i in 0..=self.l {
             let fi = self.f_i(i, message);
@@ -124,7 +124,7 @@ impl AffineMAC {
     }
 
     pub fn verify(&self, sk: &SecretKey, message: &[u8], tag: &Tag) -> bool {
-        let mut expected: Vec<G2> = vec![G2::zero(); 2 * self.k];
+        let mut expected = vector_zero::<G2>(2 * self.k);
 
         for i in 0..=self.l {
             let fi = self.f_i(i, message);

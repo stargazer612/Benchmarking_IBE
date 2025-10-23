@@ -84,7 +84,7 @@ impl IBKEM2 {
 
             assert_eq!(combined.len(), m_matrix.len());
 
-            let mut z_prime_i = vec![FieldElement::zero(); self.k];
+            let mut z_prime_i = vector_zero::<FieldElement>(self.k);
             for j in 0..self.k {
                 for k in 0..combined.len() {
                     z_prime_i[j] += combined[k] * m_matrix[k][j];
@@ -124,7 +124,7 @@ impl IBKEM2 {
 
     pub fn extract(&self, sk: &IBKEM2SecretKey, identity: &[u8]) -> IBKEM2UserSecretKey {
         let tag = self.mac.tag(&sk.mac_sk, identity);
-        let mut v_field: Vector = vec![FieldElement::zero(); self.k];
+        let mut v_field = vector_zero::<FieldElement>(self.k);
 
         for i in 0..=self.l {
             let fi = self.mac.f_i(i, identity);

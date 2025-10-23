@@ -64,6 +64,10 @@ pub fn matrix_zero<T: Zero + Copy>(rows: usize, cols: usize) -> Matrix<T> {
     vec![vec![T::zero(); cols]; rows]
 }
 
+pub fn vector_zero<T: Zero + Copy>(len: usize) -> Vec<T> {
+    vec![T::zero(); len]
+}
+
 pub fn vector_lift_g1(v: &Vector, group: &GroupCtx) -> Vec<G1> {
     v.iter().map(|&e| group.scalar_mul_p1(e)).collect()
 }
