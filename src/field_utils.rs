@@ -43,11 +43,7 @@ pub fn matrix_multiply(a: &Matrix<FieldElement>, b: &Matrix<FieldElement>) -> Ma
     let rows_a = a.len();
     let cols_a = a[0].len();
     let cols_b = b[0].len();
-    assert_eq!(
-        cols_a,
-        b.len(),
-        "Matrix dimensions don't match for multiplication"
-    );
+    assert_eq!(cols_a, b.len());
 
     let mut result = vec![vec![FieldElement::zero(); cols_b]; rows_a];
     for i in 0..rows_a {
@@ -84,7 +80,7 @@ pub fn concatenate_matrices(
     a: &Matrix<FieldElement>,
     b: &Matrix<FieldElement>,
 ) -> Matrix<FieldElement> {
-    assert_eq!(a.len(), b.len(), "Matrices must have same number of rows");
+    assert_eq!(a.len(), b.len());
     let mut result = Vec::with_capacity(a.len());
     for i in 0..a.len() {
         let mut row = a[i].clone();
@@ -101,9 +97,7 @@ pub fn concatenate_vectors(a: &Vector, b: &Vector) -> Vector {
 }
 
 pub fn matrix_transpose<T: Zero + Copy>(matrix: &Matrix<T>) -> Matrix<T> {
-    if matrix.is_empty() {
-        return Vec::new();
-    }
+    assert!(!matrix.is_empty());
 
     let rows = matrix.len();
     let cols = matrix[0].len();
@@ -139,10 +133,7 @@ pub fn g1_matrix_field_multiply(
     let rows_right = right_field.len();
     let cols_right = right_field[0].len();
 
-    assert_eq!(
-        cols_left, rows_right,
-        "Matrix dimensions don't match for multiplication"
-    );
+    assert_eq!(cols_left, rows_right);
 
     let mut result = vec![vec![G1::zero(); cols_right]; rows_left];
 

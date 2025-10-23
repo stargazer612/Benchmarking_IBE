@@ -160,11 +160,7 @@ impl QANIZK {
 
     fn compute_k_tau_a_from_crs(&self, kjb_a_g2: &[Vec<Matrix<G2>>], tau: &[usize]) -> Matrix<G2> {
         let lambda = tau.len();
-        assert_eq!(
-            kjb_a_g2.len(),
-            lambda,
-            "kjb_a_g2 length must match tau length"
-        );
+        assert_eq!(kjb_a_g2.len(), lambda);
         assert_ne!(lambda, 0);
 
         let rows = kjb_a_g2[0][0].len();
@@ -174,7 +170,7 @@ impl QANIZK {
 
         for j in 0..lambda {
             let tau_j = tau[j];
-            assert!(tau_j <= 1, "tau values must be 0 or 1");
+            assert!(tau_j <= 1);
 
             let kj_tauj_a = &kjb_a_g2[j][tau_j];
 

@@ -59,11 +59,7 @@ impl IBKEM2 {
         let m_matrix = random_matrix(self.k + eta, self.k);
         let mac_sk = self.mac.gen_mac();
 
-        assert_eq!(
-            mac_sk.x_matrices.len(),
-            self.l + 1,
-            "Wrong x_matrices count"
-        );
+        assert_eq!(mac_sk.x_matrices.len(), self.l + 1);
 
         let mut y_matrices = Vec::with_capacity(self.l);
         let mut z_matrices = Vec::with_capacity(self.l);
@@ -86,7 +82,7 @@ impl IBKEM2 {
             let y_prime_i = random_vector(self.k);
             let combined = concatenate_vectors(&y_prime_i, &mac_sk.x_prime[i]);
 
-            assert_eq!(combined.len(), m_matrix.len(), "error :dimension mismatch");
+            assert_eq!(combined.len(), m_matrix.len());
 
             let mut z_prime_i = vec![FieldElement::zero(); self.k];
             for j in 0..self.k {
