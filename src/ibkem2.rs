@@ -81,15 +81,8 @@ impl IBKEM2 {
         for i in 0..=self.l_prime {
             let y_prime_i = random_vector(self.k);
             let combined = vector_concat(&y_prime_i, &mac_sk.x_prime[i]);
-
-            assert_eq!(combined.len(), m_matrix.len());
-
-            let mut z_prime_i = vector_zero::<FieldElement>(self.k);
-            for j in 0..self.k {
-                for k in 0..combined.len() {
-                    z_prime_i[j] += combined[k] * m_matrix[k][j];
-                }
-            }
+            let m_matrix_transposed = matrix_transpose(&m_matrix);
+            let z_prime_i = matrix_vector_mul(&m_matrix_transposed, &combined);
 
             y_prime_vectors.push(y_prime_i);
             z_prime_vectors.push(z_prime_i);
