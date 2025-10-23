@@ -67,8 +67,8 @@ impl IBKEM2 {
             "Wrong x_matrices count"
         );
 
-        let mut y_matrices = Vec::new();
-        let mut z_matrices = Vec::new();
+        let mut y_matrices = Vec::with_capacity(self.l);
+        let mut z_matrices = Vec::with_capacity(self.l);
 
         for i in 0..=self.l {
             let y_i = random_matrix(self.k, self.k);
@@ -81,8 +81,8 @@ impl IBKEM2 {
             z_matrices.push(z_i);
         }
 
-        let mut y_prime_vectors = Vec::new();
-        let mut z_prime_vectors = Vec::new();
+        let mut y_prime_vectors = Vec::with_capacity(self.l_prime);
+        let mut z_prime_vectors = Vec::with_capacity(self.l_prime);
 
         for i in 0..=self.l_prime {
             let y_prime_i = random_vector(self.k);
@@ -178,7 +178,7 @@ impl IBKEM2 {
 
         let c1_g1 = group_matrix_vector_mul_msm(&z_i_sum, &r);
 
-        let mut pairing_pairs = Vec::new();
+        let mut pairing_pairs = Vec::with_capacity(self.l_prime);
         for i in 0..=self.l_prime {
             let fi_prime = self.mac.f_prime_i(i, identity);
             if !fi_prime.is_zero() {

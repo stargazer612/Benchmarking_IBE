@@ -53,14 +53,14 @@ impl QANIZK {
         let m_transpose_matrix = matrix_transpose(&m1_matrix);
         let mk_g1 = g1_matrix_field_multiply(&m_transpose_matrix, &k_matrix);
 
-        let mut kjb_a_g2 = Vec::new();
-        let mut b_kjb_g1 = Vec::new();
+        let mut kjb_a_g2 = Vec::with_capacity(self.lambda);
+        let mut b_kjb_g1 = Vec::with_capacity(self.lambda);
 
-        for _j in 0..self.lambda {
-            let mut kjb_row_a = Vec::new();
-            let mut b_kjb_row = Vec::new();
+        for _ in 0..self.lambda {
+            let mut kjb_row_a = Vec::with_capacity(2);
+            let mut b_kjb_row = Vec::with_capacity(2);
 
-            for _b in 0..2 {
+            for _ in 0..2 {
                 let kjb_matrix = random_matrix(self.k, self.k + 1);
                 let kjb_a = matrix_multiply(&kjb_matrix, &a_matrix);
                 let kjb_row_a_g2: Matrix<G2> = matrix_lift_g2(&kjb_a, &self.group);
@@ -119,8 +119,8 @@ impl QANIZK {
         let mut result = vec![G1::zero(); cols];
 
         for col in 0..cols {
-            let mut bases = Vec::new();
-            let mut scalars = Vec::new();
+            let mut bases = Vec::with_capacity(lambda * s.len());
+            let mut scalars = Vec::with_capacity(lambda * s.len());
 
             for j in 0..lambda {
                 let tau_j = tau[j];

@@ -49,7 +49,7 @@ pub fn bench_multi_pairing(c: &mut Criterion) {
     let group = GroupCtx::bls12_381();
 
     let length = 5;
-    let mut pairs = Vec::new();
+    let mut pairs = Vec::with_capacity(length);
     for _ in 0..length {
         let a = random_field_element();
         let b = random_field_element();

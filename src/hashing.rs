@@ -4,7 +4,7 @@ use rand::Rng;
 pub fn blake3_hash_to_bits(input: &[u8], num_bits: usize) -> Vec<usize> {
     let hash = blake3::hash(input);
     let hash_bytes = hash.as_bytes();
-    let mut bits = Vec::new();
+    let mut bits = Vec::with_capacity(num_bits);
 
     for i in 0..num_bits {
         let byte_idx = i / 8;
