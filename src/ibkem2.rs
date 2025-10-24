@@ -124,7 +124,7 @@ impl IBKEM2 {
             let fi = f_i(i, self.mac.l, identity);
             if !fi.is_zero() {
                 let yi_t = matrix_vector_mul(&sk.y_matrices[i], &tag.t_field);
-                let scaled = scalar_vector_mul(fi, &yi_t);
+                let scaled = scalar_vector_mul(FieldElement::one(), &yi_t);
                 v_field = vector_add(&v_field, &scaled);
             }
         }
@@ -132,7 +132,7 @@ impl IBKEM2 {
         for i in 0..=self.l_prime {
             let fi_prime = f_prime_i(i);
             if !fi_prime.is_zero() {
-                let scaled_y_prime = scalar_vector_mul(fi_prime, &sk.y_prime_vectors[i]);
+                let scaled_y_prime = scalar_vector_mul(FieldElement::one(), &sk.y_prime_vectors[i]);
                 v_field = vector_add(&v_field, &scaled_y_prime);
             }
         }
@@ -156,7 +156,7 @@ impl IBKEM2 {
         for i in 0..=self.l {
             let fi = f_i(i, self.mac.l, identity);
             if !fi.is_zero() {
-                let tmp = matrix_multiply_scalar(&pk.z_matrices[i], fi);
+                let tmp = matrix_multiply_scalar(&pk.z_matrices[i], FieldElement::one());
                 z_i_sum = matrix_add_g1(&z_i_sum, &tmp);
             }
         }
@@ -168,7 +168,7 @@ impl IBKEM2 {
             let fi_prime = f_prime_i(i);
             if !fi_prime.is_zero() {
                 let zi_prime_dot_r = vector_dot_g1(&r, &pk.z_prime_vectors[i]);
-                let scaling = zi_prime_dot_r.mul(fi_prime.into_repr());
+                let scaling = zi_prime_dot_r.mul(FieldElement::one().into_repr());
                 pairing_pairs.push((scaling, self.group.p2.clone()));
             }
         }

@@ -5,7 +5,7 @@ use crate::types::*;
 
 use ark_bls12_381::G2Projective as G2;
 use ark_ec::ProjectiveCurve;
-use ark_ff::{PrimeField, Zero};
+use ark_ff::{One, PrimeField, Zero};
 
 pub struct SecretKey {
     pub b: Matrix<FieldElement>,
@@ -63,12 +63,12 @@ impl AffineMAC {
             let fi = f_i(i, self.l, message);
             if !fi.is_zero() {
                 let xi_t = matrix_vector_mul(&sk.x_matrices[i], &t_field);
-                let scaled = scalar_vector_mul(fi, &xi_t);
+                let scaled = scalar_vector_mul(FieldElement::one(), &xi_t);
                 u_field = vector_add(&u_field, &scaled);
             }
         }
 
-        let f0 = f_prime_i(0);
+        let f0 = FieldElement::one();
         for i in 0..=self.l_prime {
             let fi_prime = f_prime_i(i);
             if !fi_prime.is_zero() {
@@ -97,7 +97,7 @@ impl AffineMAC {
                 for r in 0..(2 * self.k) {
                     let mut accum = G2::zero();
                     for j in 0..self.k {
-                        let scalar = xi[r][j] * fi;
+                        let scalar = xi[r][j] * FieldElement::one();
                         if !scalar.is_zero() {
                             accum += tag.t_g2[j].mul(scalar.into_repr());
                         }
@@ -113,7 +113,7 @@ impl AffineMAC {
                 let row_vec = &sk.x_prime[i];
                 assert_eq!(row_vec.len(), 2 * self.k);
                 for r in 0..(2 * self.k) {
-                    let coeff = fi_prime * row_vec[r];
+                    let coeff = FieldElement::one() * row_vec[r];
                     if !coeff.is_zero() {
                         expected[r] += self.group.scalar_mul_p2(coeff);
                     }
