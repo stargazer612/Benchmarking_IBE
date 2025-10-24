@@ -1,10 +1,11 @@
+use crate::f_functions::*;
 use crate::field_utils::*;
 use crate::group_ctx::*;
 use crate::types::*;
 
 use ark_bls12_381::G2Projective as G2;
 use ark_ec::ProjectiveCurve;
-use ark_ff::{One, PrimeField, Zero};
+use ark_ff::{PrimeField, Zero};
 
 pub struct SecretKey {
     pub b: Matrix<FieldElement>,
@@ -52,43 +53,6 @@ impl AffineMAC {
         }
     }
 
-    pub fn f_i(&self, i: usize, message: &[u8]) -> FieldElement {
-        match i {
-            0 | 1 => FieldElement::zero(),
-            _ => {
-                let bit_index = (i - 2) / 2;
-                let bit_value = (i - 2) % 2;
-
-                if bit_index < self.l && bit_index < message.len() * 8 {
-                    let byte_index = bit_index / 8;
-                    let bit_position = bit_index % 8;
-
-                    if byte_index < message.len() {
-                        let message_bit = ((message[byte_index] >> bit_position) & 1) as usize;
-
-                        if message_bit == bit_value {
-                            FieldElement::one()
-                        } else {
-                            FieldElement::zero()
-                        }
-                    } else {
-                        FieldElement::zero()
-                    }
-                } else {
-                    FieldElement::zero()
-                }
-            }
-        }
-    }
-
-    pub fn f_prime_i(&self, i: usize, _message: &[u8]) -> FieldElement {
-        if i == 0 {
-            FieldElement::one()
-        } else {
-            FieldElement::zero()
-        }
-    }
-
     pub fn tag(&self, sk: &SecretKey, message: &[u8]) -> Tag {
         let s = random_vector(self.k);
         let t_field = matrix_vector_mul(&sk.b, &s);
@@ -96,7 +60,7 @@ impl AffineMAC {
         let mut u_field = vector_zero::<FieldElement>(2 * self.k);
 
         for i in 0..=self.l {
-            let fi = self.f_i(i, message);
+            let fi = f_i(i, self.l, message);
             if !fi.is_zero() {
                 let xi_t = matrix_vector_mul(&sk.x_matrices[i], &t_field);
                 let scaled = scalar_vector_mul(fi, &xi_t);
@@ -104,9 +68,9 @@ impl AffineMAC {
             }
         }
 
-        let f0 = self.f_prime_i(0, message);
+        let f0 = f_prime_i(0);
         for i in 0..=self.l_prime {
-            let fi_prime = self.f_prime_i(i, message);
+            let fi_prime = f_prime_i(i);
             if !fi_prime.is_zero() {
                 let scaled_xprime = scalar_vector_mul(f0, &sk.x_prime[i]);
                 u_field = vector_add(&u_field, &scaled_xprime);
@@ -127,7 +91,7 @@ impl AffineMAC {
         let mut expected = vector_zero::<G2>(2 * self.k);
 
         for i in 0..=self.l {
-            let fi = self.f_i(i, message);
+            let fi = f_i(i, self.l, message);
             if !fi.is_zero() {
                 let xi = &sk.x_matrices[i];
                 for r in 0..(2 * self.k) {
@@ -144,7 +108,7 @@ impl AffineMAC {
         }
 
         for i in 0..=self.l_prime {
-            let fi_prime = self.f_prime_i(i, message);
+            let fi_prime = f_prime_i(i);
             if !fi_prime.is_zero() {
                 let row_vec = &sk.x_prime[i];
                 assert_eq!(row_vec.len(), 2 * self.k);

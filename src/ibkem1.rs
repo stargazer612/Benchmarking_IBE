@@ -1,4 +1,5 @@
 use crate::affine_mac::{AffineMAC, SecretKey as MACSecretKey};
+use crate::f_functions::*;
 use crate::field_utils::*;
 use crate::group_ctx::*;
 use crate::types::*;
@@ -112,7 +113,7 @@ impl IBKEM1 {
         let mut v_field = vector_zero::<FieldElement>(self.k);
 
         for i in 0..=self.l {
-            let fi = self.mac.f_i(i, identity);
+            let fi = f_i(i, self.mac.l, identity);
             if !fi.is_zero() {
                 let yi_t = matrix_vector_mul(&sk.y_matrices[i], &tag.t_field);
                 let scaled = scalar_vector_mul(fi, &yi_t);
@@ -121,7 +122,7 @@ impl IBKEM1 {
         }
 
         for i in 0..=self.l_prime {
-            let fi_prime = self.mac.f_prime_i(i, identity);
+            let fi_prime = f_prime_i(i);
             if !fi_prime.is_zero() {
                 let scaled_y_prime = scalar_vector_mul(fi_prime, &sk.y_prime_vectors[i]);
                 v_field = vector_add(&v_field, &scaled_y_prime);
@@ -145,7 +146,7 @@ impl IBKEM1 {
         let mut z_i_sum = matrix_zero::<G1>(n, self.k);
 
         for i in 0..=self.l {
-            let fi = self.mac.f_i(i, identity);
+            let fi = f_i(i, self.mac.l, identity);
             if !fi.is_zero() {
                 let tmp = matrix_multiply_scalar(&pk.z_matrices[i], fi);
                 z_i_sum = matrix_add_g1(&z_i_sum, &tmp);
@@ -157,7 +158,7 @@ impl IBKEM1 {
         let mut pairing_pairs = Vec::with_capacity(self.l_prime);
 
         for i in 0..=self.l_prime {
-            let fi_prime = self.mac.f_prime_i(i, identity);
+            let fi_prime = f_prime_i(i);
             if !fi_prime.is_zero() {
                 let zi_prime_dot_r = vector_dot_g1(&r, &pk.z_prime_vectors[i]);
                 let scaling = zi_prime_dot_r.mul(fi_prime.into_repr());
