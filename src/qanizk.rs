@@ -168,7 +168,7 @@ impl QANIZK {
         for j in 0..lambda {
             let tau_j = tau[j] as usize;
             let kj_tauj_a = &kjb_a_g2[j][tau_j];
-            k_tau_a = matrix_add_g2(&k_tau_a, kj_tauj_a);
+            k_tau_a = matrix_add(&k_tau_a, kj_tauj_a);
         }
         k_tau_a
     }

@@ -145,7 +145,7 @@ impl IBKEM1 {
         for i in 0..=self.l {
             let fi = f_i(i, self.mac.l, identity);
             if !fi.is_zero() {
-                z_i_sum = matrix_add_g1(&z_i_sum, &pk.z_matrices[i]);
+                z_i_sum = matrix_add(&z_i_sum, &pk.z_matrices[i]);
             }
         }
 
