@@ -5,8 +5,7 @@ use crate::group_ctx::*;
 use crate::types::*;
 
 use ark_bls12_381::{G1Projective as G1, G2Projective as G2};
-use ark_ec::ProjectiveCurve;
-use ark_ff::{One, PrimeField, Zero};
+use ark_ff::{One, Zero};
 
 pub struct IBKEM1PublicKey {
     pub m_matrix: Matrix<G1>,
@@ -116,16 +115,14 @@ impl IBKEM1 {
             let fi = f_i(i, self.mac.l, identity);
             if !fi.is_zero() {
                 let yi_t = matrix_vector_mul(&sk.y_matrices[i], &tag.t_field);
-                let scaled = scalar_vector_mul(FieldElement::one(), &yi_t);
-                v_field = vector_add(&v_field, &scaled);
+                v_field = vector_add(&v_field, &&yi_t);
             }
         }
 
         for i in 0..=self.l_prime {
             let fi_prime = f_prime_i(i);
             if !fi_prime.is_zero() {
-                let scaled_y_prime = scalar_vector_mul(FieldElement::one(), &sk.y_prime_vectors[i]);
-                v_field = vector_add(&v_field, &scaled_y_prime);
+                v_field = vector_add(&v_field, &sk.y_prime_vectors[i]);
             }
         }
 
@@ -148,8 +145,7 @@ impl IBKEM1 {
         for i in 0..=self.l {
             let fi = f_i(i, self.mac.l, identity);
             if !fi.is_zero() {
-                let tmp = matrix_multiply_scalar(&pk.z_matrices[i], FieldElement::one());
-                z_i_sum = matrix_add_g1(&z_i_sum, &tmp);
+                z_i_sum = matrix_add_g1(&z_i_sum, &pk.z_matrices[i]);
             }
         }
 
@@ -161,8 +157,7 @@ impl IBKEM1 {
             let fi_prime = f_prime_i(i);
             if !fi_prime.is_zero() {
                 let zi_prime_dot_r = vector_dot_g1(&r, &pk.z_prime_vectors[i]);
-                let scaling = zi_prime_dot_r.mul(FieldElement::one().into_repr());
-                pairing_pairs.push((scaling, self.group.p2.clone()));
+                pairing_pairs.push((zi_prime_dot_r, self.group.p2.clone()));
             }
         }
 
