@@ -5,6 +5,7 @@ pub mod group_ctx;
 pub mod hashing;
 pub mod ibkem1;
 pub mod ibkem2;
+pub mod lw;
 pub mod qanizk;
 pub mod types;
 
@@ -15,5 +16,6 @@ pub use group_ctx::*;
 pub use hashing::*;
 pub use ibkem1::*;
 pub use ibkem2::*;
+pub use lw::*;
 pub use qanizk::*;
 pub use types::*;
