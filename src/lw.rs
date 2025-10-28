@@ -30,7 +30,7 @@ pub struct USK {
 
 pub struct CT {
     pub identity: Vec<String>,
-    pub k: Gt,
+    pub msg: Gt,
     pub c: G1,
     pub c_i: Vec<G1>,
     pub c_i_alt: Vec<G1>,
@@ -39,6 +39,10 @@ pub struct CT {
 pub struct LW {}
 
 impl LW {
+    pub fn new() -> LW {
+        Self {}
+    }
+
     pub fn setup(&self, mut rng: impl Rng) -> (MSK, MPK) {
         let alpha = Fr::rand(&mut rng);
         let b = Fr::rand(&mut rng);
@@ -93,6 +97,7 @@ impl LW {
         for _ in 1..n_k {
             let lambda_i = Fr::rand(&mut rng);
             sum += lambda_i;
+            lambdas.push(lambda_i);
         }
         lambdas[0] = msk.alpha - sum;
 
@@ -114,7 +119,7 @@ impl LW {
         }
     }
 
-    pub fn encrypt(&self, mut rng: impl Rng, mpk: &MPK, identity: Vec<String>) -> CT {
+    pub fn encrypt(&self, mut rng: impl Rng, msg: &Gt, mpk: &MPK, identity: Vec<String>) -> CT {
         let n_c = identity.len();
         assert!(n_c > 0);
 
@@ -146,8 +151,7 @@ impl LW {
 
         CT {
             identity: identity.clone(),
-            // TODO: probably this should be the masked payload instead
-            k: mpk.a,
+            msg: mpk.a * msg,
             c,
             c_i,
             c_i_alt,
@@ -245,6 +249,6 @@ impl LW {
             result *= tmp;
         }
 
-        Some(result)
+        Some(ct.msg / result)
     }
 }
