@@ -29,6 +29,7 @@ pub struct USK {
 }
 
 pub struct CT {
+    pub identity: Vec<String>,
     pub k: Gt,
     pub c: G1,
     pub c_i: Vec<G1>,
@@ -144,6 +145,7 @@ impl LW {
         }
 
         CT {
+            identity: identity.clone(),
             // TODO: probably this should be the masked payload instead
             k: mpk.a,
             c,
@@ -218,5 +220,31 @@ impl LW {
             k_1: new_k1,
             k_2: new_k2,
         }
+    }
+
+    pub fn decrypt(&self, usk: &USK, ct: &CT) -> Option<Gt> {
+        let n_k = usk.identity.len();
+        let n_c = ct.identity.len();
+        assert!(n_k > 0);
+        assert!(n_k <= n_c);
+
+        for i in 0..n_k {
+            if usk.identity[i] != ct.identity[i] {
+                return None;
+            }
+        }
+
+        let mut result = Gt::one();
+
+        for i in 0..n_k {
+            let tmp_1 = Bls12_381::pairing(ct.c, usk.k_1[i]).0;
+            let tmp_2 = Bls12_381::pairing(ct.c_i[i], usk.k[i]).0;
+            let tmp_3 = Bls12_381::pairing(ct.c_i_alt[i], usk.k_2[i]).0;
+
+            let tmp = (tmp_1 / tmp_2) * tmp_3;
+            result *= tmp;
+        }
+
+        Some(result)
     }
 }
