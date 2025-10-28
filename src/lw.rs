@@ -28,6 +28,13 @@ pub struct USK {
     pub k_2: Vec<G2>,
 }
 
+pub struct CT {
+    pub k: Gt,
+    pub c: G1,
+    pub c_i: Vec<G1>,
+    pub c_i_alt: Vec<G1>,
+}
+
 pub struct LW {}
 
 impl LW {
@@ -103,6 +110,45 @@ impl LW {
             k,
             k_1,
             k_2,
+        }
+    }
+
+    pub fn encrypt(&self, mut rng: impl Rng, mpk: &MPK, identity: Vec<String>) -> CT {
+        let n_c = identity.len();
+        assert!(n_c > 0);
+
+        let g1 = G1::generator();
+        let s = Fr::rand(&mut rng);
+        let c = g1 * s;
+
+        let mut c_i = Vec::with_capacity(n_c);
+        let mut c_i_alt = Vec::with_capacity(n_c);
+
+        let mut ss = Vec::with_capacity(n_c);
+        for _ in 0..n_c {
+            let s_i = Fr::rand(&mut rng);
+            ss.push(s_i);
+            c_i_alt.push(g1 * s);
+        }
+
+        for i in 0..n_c {
+            // TODO: properly hash id_i to G1
+            let xid = Fr::rand(&mut rng);
+            let e = ss[i] * xid;
+
+            let c_1 = mpk.b_g1 * s;
+            let c_2 = mpk.b_0_g1 * ss[i];
+            let c_3 = mpk.b_1_g1 * e;
+
+            c_i.push(c_1 + c_2 + c_3);
+        }
+
+        CT {
+            // TODO: probably this should be the masked payload instead
+            k: mpk.a,
+            c,
+            c_i,
+            c_i_alt,
         }
     }
 }
