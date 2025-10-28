@@ -151,4 +151,72 @@ impl LW {
             c_i_alt,
         }
     }
+
+    pub fn delegate(
+        &self,
+        mut rng: impl Rng,
+        mpk: &MPK,
+        usk: &USK,
+        identity: Vec<String>,
+        new_identity: String,
+    ) -> USK {
+        let n_k = identity.len();
+        assert!(n_k > 0);
+
+        let g2 = G2::generator();
+
+        let mut lambdas = Vec::with_capacity(n_k);
+        let mut sum = Fr::zero();
+        for _ in 0..n_k {
+            let lambda_i = Fr::rand(&mut rng);
+            lambdas.push(lambda_i);
+            sum += lambda_i;
+        }
+
+        let mut rs = Vec::with_capacity(n_k + 1);
+        for _ in 0..(n_k + 1) {
+            let r_i = Fr::rand(&mut rng);
+            rs.push(r_i);
+        }
+
+        let mut identity = identity.clone();
+        identity.push(new_identity);
+
+        let mut new_k = usk.k_1.clone();
+        for i in 0..n_k {
+            new_k[i] = new_k[i] + g2 * rs[i];
+        }
+        new_k.push(g2 * rs[n_k]);
+
+        let mut new_k1 = usk.k.clone();
+        for i in 0..n_k {
+            let k_1 = new_k1[i];
+            let k_2 = g2 * lambdas[i];
+            let k_3 = mpk.b_g2 * rs[i];
+            new_k1[i] = k_1 + k_2 + k_3;
+        }
+        new_k1.push(g2 * (-sum));
+
+        let mut new_k2 = usk.k_2.clone();
+        for i in 0..n_k {
+            let k_1 = new_k2[i];
+            let k_2 = mpk.b_0_g2 * rs[i];
+            // TODO: properly hash id_i to G2
+            let xid = Fr::rand(&mut rng);
+            let k_3 = mpk.b_1_g2 * (xid * rs[i]);
+            new_k2[i] = k_1 + k_2 + k_3;
+        }
+        let tmp1 = mpk.b_0_g2 * rs[n_k];
+        // TODO: properly hash id_i to G2
+        let xid = Fr::rand(&mut rng);
+        let tmp2 = mpk.b_1_g2 * (xid * rs[n_k]);
+        new_k2.push(tmp1 + tmp2);
+
+        USK {
+            identity,
+            k: new_k,
+            k_1: new_k1,
+            k_2: new_k2,
+        }
+    }
 }
