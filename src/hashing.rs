@@ -1,19 +1,21 @@
+use ark_bls12_381::Fr;
+use ark_ff::fields::field_hashers::{DefaultFieldHasher, HashToField};
+
 use bit_vec::BitVec;
-use blake3;
 use rand::Rng;
+
+use crate::blake3::Blake3;
 
 pub fn blake3_hash_to_bits(input: &[u8], num_bits: usize) -> BitVec {
     assert!(num_bits <= 256);
-    let hash = blake3::hash(input);
-    let hash_bytes = hash.as_bytes();
-    let mut bits = BitVec::from_bytes(hash_bytes);
+    let hash_bytes = Blake3::default().hash(input);
+    let mut bits = BitVec::from_bytes(&hash_bytes);
     bits.truncate(num_bits);
     bits
 }
 
 pub fn blake3_hash_bytes(input: &[u8]) -> Vec<u8> {
-    let hash = blake3::hash(input);
-    hash.as_bytes().to_vec()
+    Blake3::default().hash(input).to_vec()
 }
 
 pub fn generate_random_message_128() -> Vec<u8> {
@@ -50,4 +52,12 @@ pub fn generate_email_and_hash_identity(bits: usize) -> (Vec<u8>, Vec<u8>) {
     let hash_bits = blake3_hash_to_bits(&email, bits);
     let identity = hash_bits.to_bytes();
     (email, identity)
+}
+
+const IDENT_DOMAIN: &str = "IDENTITY";
+
+pub fn hash_to_fr(id: &str) -> Fr {
+    let domain = IDENT_DOMAIN.as_bytes();
+    let hasher = <DefaultFieldHasher<Blake3> as HashToField<Fr>>::new(domain);
+    hasher.hash_to_field::<1>(id.as_bytes())[0]
 }

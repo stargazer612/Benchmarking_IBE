@@ -1,4 +1,5 @@
 pub mod affine_mac;
+pub mod blake3;
 pub mod f_functions;
 pub mod field_utils;
 pub mod group_ctx;
@@ -10,6 +11,7 @@ pub mod qanizk;
 pub mod types;
 
 pub use affine_mac::*;
+pub use blake3::*;
 pub use f_functions::*;
 pub use field_utils::*;
 pub use group_ctx::*;
