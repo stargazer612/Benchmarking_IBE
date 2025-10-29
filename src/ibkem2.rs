@@ -6,7 +6,7 @@ use crate::qanizk::{CRS, QANIZK, QANIZKProof as Proof};
 use crate::types::*;
 
 use ark_bls12_381::{G1Projective as G1, G2Projective as G2};
-use ark_ec::ProjectiveCurve;
+use ark_ec::CurveGroup;
 use ark_ff::{BigInteger, One, PrimeField, Zero};
 
 pub struct IBKEM2PublicKey {
@@ -165,7 +165,7 @@ impl IBKEM2 {
             let fi_prime = f_prime_i(i);
             if !fi_prime.is_zero() {
                 let zi_prime_dot_r = vector_dot_g1(&r, &pk.z_prime_vectors[i]);
-                pairing_pairs.push((zi_prime_dot_r, self.group.p2.clone()));
+                pairing_pairs.push((zi_prime_dot_r, self.group.g2.clone()));
             }
         }
 
@@ -179,8 +179,8 @@ impl IBKEM2 {
         tag.extend_from_slice(identity);
         for point in &c0_g1 {
             let affine = point.into_affine();
-            tag.extend_from_slice(&affine.x.into_repr().to_bytes_le());
-            tag.extend_from_slice(&affine.y.into_repr().to_bytes_le());
+            tag.extend_from_slice(&affine.x.into_bigint().to_bytes_le());
+            tag.extend_from_slice(&affine.y.into_bigint().to_bytes_le());
         }
 
         let proof = self.qanizk.prove(&pk.crs, &tag, &c0_g1, &r);
@@ -207,8 +207,8 @@ impl IBKEM2 {
         tag.extend_from_slice(identity);
         for point in &ciphertext.c0_g1 {
             let affine = point.into_affine();
-            tag.extend_from_slice(&affine.x.into_repr().to_bytes_le());
-            tag.extend_from_slice(&affine.y.into_repr().to_bytes_le());
+            tag.extend_from_slice(&affine.x.into_bigint().to_bytes_le());
+            tag.extend_from_slice(&affine.y.into_bigint().to_bytes_le());
         }
 
         let c0_g1 = &ciphertext.c0_g1;
