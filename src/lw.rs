@@ -1,7 +1,7 @@
 use ark_bls12_381::{Bls12_381, Fq12 as Gt, Fr, G1Projective as G1, G2Projective as G2};
 use ark_ec::PrimeGroup;
 use ark_ec::pairing::Pairing;
-use ark_ff::{One, UniformRand, Zero};
+use ark_ff::{Field, One, PrimeField, UniformRand, Zero};
 use ark_std::rand::Rng;
 
 use crate::hash_to_fr;
@@ -135,7 +135,7 @@ impl LW {
         for _ in 0..n_c {
             let s_i = Fr::rand(&mut rng);
             ss.push(s_i);
-            c_i_alt.push(g1 * s);
+            c_i_alt.push(g1 * s_i);
         }
 
         for i in 0..n_c {
@@ -151,7 +151,7 @@ impl LW {
 
         CT {
             identity: identity.clone(),
-            msg: mpk.a * msg,
+            msg: mpk.a.pow(s.into_bigint()) * msg,
             c,
             c_i,
             c_i_alt,
@@ -240,10 +240,10 @@ impl LW {
 
         for i in 0..n_k {
             let tmp_1 = Bls12_381::pairing(ct.c, usk.k_1[i]).0;
-            let tmp_2 = Bls12_381::pairing(ct.c_i[i], usk.k[i]).0;
+            let tmp_2 = Bls12_381::pairing(-ct.c_i[i], usk.k[i]).0;
             let tmp_3 = Bls12_381::pairing(ct.c_i_alt[i], usk.k_2[i]).0;
 
-            let tmp = (tmp_1 / tmp_2) * tmp_3;
+            let tmp = tmp_1 * tmp_2 * tmp_3;
             result *= tmp;
         }
 

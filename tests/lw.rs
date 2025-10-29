@@ -18,8 +18,8 @@ fn lw_decrypt_ok() {
     identity.push(String::from("C"));
     identity.push(String::from("D"));
 
-    let k = Gt::rand(&mut rng);
     let usk = lw.keygen(&mut rng, &msk, identity.clone());
+    let k = Gt::rand(&mut rng);
     let ct = lw.encrypt(&mut rng, &k, &mpk, identity.clone());
     let dec = lw.decrypt(&usk, &ct);
 
