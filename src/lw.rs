@@ -1,8 +1,10 @@
 use ark_bls12_381::{Bls12_381, Fq12 as Gt, Fr, G1Projective as G1, G2Projective as G2};
 use ark_ec::PrimeGroup;
 use ark_ec::pairing::Pairing;
-use ark_ff::{One, PrimeField, UniformRand, Zero};
+use ark_ff::{One, UniformRand, Zero};
 use ark_std::rand::Rng;
+
+use crate::hash_to_fr;
 
 pub struct MSK {
     pub alpha: Fr,
@@ -105,8 +107,7 @@ impl LW {
             let e_1 = lambdas[i] + rs[i] * msk.b;
             k_1.push(g2 * e_1);
 
-            // TODO: properly hash id_i to G2
-            let xid = Fr::rand(&mut rng);
+            let xid = hash_to_fr(&identity[i]);
             let e_2 = rs[i] * (msk.b_0 + xid * msk.b_1);
             k_2.push(g2 * e_2);
         }
@@ -138,8 +139,7 @@ impl LW {
         }
 
         for i in 0..n_c {
-            // TODO: properly hash id_i to G1
-            let xid = Fr::rand(&mut rng);
+            let xid = hash_to_fr(&identity[i]);
             let e = ss[i] * xid;
 
             let c_1 = mpk.b_g1 * s;
@@ -186,7 +186,7 @@ impl LW {
         }
 
         let mut identity = identity.clone();
-        identity.push(new_identity);
+        identity.push(new_identity.clone());
 
         let mut new_k = usk.k_1.clone();
         for i in 0..n_k {
@@ -207,14 +207,12 @@ impl LW {
         for i in 0..n_k {
             let k_1 = new_k2[i];
             let k_2 = mpk.b_0_g2 * rs[i];
-            // TODO: properly hash id_i to G2
-            let xid = Fr::rand(&mut rng);
+            let xid = hash_to_fr(&identity[i]);
             let k_3 = mpk.b_1_g2 * (xid * rs[i]);
             new_k2[i] = k_1 + k_2 + k_3;
         }
         let tmp1 = mpk.b_0_g2 * rs[n_k];
-        // TODO: properly hash id_i to G2
-        let xid = Fr::rand(&mut rng);
+        let xid = hash_to_fr(&new_identity);
         let tmp2 = mpk.b_1_g2 * (xid * rs[n_k]);
         new_k2.push(tmp1 + tmp2);
 
