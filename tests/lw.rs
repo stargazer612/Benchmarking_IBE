@@ -9,206 +9,98 @@ fn parse_identity(id: &str) -> Vec<String> {
     id.split(".").map(|s| String::from(s)).collect()
 }
 
-#[test]
-fn lw_decrypt_minimal_ok() {
+fn run_scheme(
+    user_identity: &str,
+    ct_identity: &str,
+    identity_extension: Option<&str>,
+) -> (Gt, Option<Gt>) {
     let mut rng = thread_rng();
 
     let lw = LW::new();
     let (msk, mpk) = lw.setup(&mut rng);
 
-    let identity = parse_identity("A");
-
-    let usk = lw.keygen(&mut rng, &msk, identity.clone());
     let k = Gt::rand(&mut rng);
-    let ct = lw.encrypt(&mut rng, &k, &mpk, identity);
-    let dec = lw.decrypt(&usk, &ct);
+    let ct_identity = parse_identity(ct_identity);
+    let ct = lw.encrypt(&mut rng, &k, &mpk, ct_identity);
 
+    let user_identity = parse_identity(user_identity);
+    let usk = lw.keygen(&mut rng, &msk, user_identity.clone());
+    let usk = match identity_extension {
+        None => usk,
+        Some(id) => lw.delegate(
+            &mut rng,
+            &mpk,
+            &usk,
+            user_identity.clone(),
+            String::from(id),
+        ),
+    };
+
+    let dec = lw.decrypt(&usk, &ct);
+    return (k, dec);
+}
+
+fn test_decrypt_ok(user_identity: &str, ct_identity: &str, identity_extension: Option<&str>) {
+    let (k, dec) = run_scheme(user_identity, ct_identity, identity_extension);
     assert!(dec.is_some_and(|k_dec| k_dec == k));
 }
 
-#[test]
-fn lw_decrypt_exact_match_ok() {
-    let mut rng = thread_rng();
-
-    let lw = LW::new();
-    let (msk, mpk) = lw.setup(&mut rng);
-
-    let identity = parse_identity("A.B.C.D");
-
-    let usk = lw.keygen(&mut rng, &msk, identity.clone());
-    let k = Gt::rand(&mut rng);
-    let ct = lw.encrypt(&mut rng, &k, &mpk, identity);
-    let dec = lw.decrypt(&usk, &ct);
-
-    assert!(dec.is_some_and(|k_dec| k_dec == k));
-}
-
-#[test]
-fn lw_decrypt_superior_ok() {
-    let mut rng = thread_rng();
-
-    let lw = LW::new();
-    let (msk, mpk) = lw.setup(&mut rng);
-
-    let superior = parse_identity("A.B.C");
-    let identity = parse_identity("A.B.C.D");
-
-    let usk = lw.keygen(&mut rng, &msk, superior);
-    let k = Gt::rand(&mut rng);
-    let ct = lw.encrypt(&mut rng, &k, &mpk, identity);
-    let dec = lw.decrypt(&usk, &ct);
-
-    assert!(dec.is_some_and(|k_dec| k_dec == k));
-}
-
-#[test]
-fn lw_decrypt_root_ok() {
-    let mut rng = thread_rng();
-
-    let lw = LW::new();
-    let (msk, mpk) = lw.setup(&mut rng);
-
-    let boss = parse_identity("A");
-    let identity = parse_identity("A.B.C.D");
-
-    let usk = lw.keygen(&mut rng, &msk, boss);
-    let k = Gt::rand(&mut rng);
-    let ct = lw.encrypt(&mut rng, &k, &mpk, identity);
-    let dec = lw.decrypt(&usk, &ct);
-
-    assert!(dec.is_some_and(|k_dec| k_dec == k));
-}
-
-#[test]
-fn lw_decrypt_minimal_fail() {
-    let mut rng = thread_rng();
-
-    let lw = LW::new();
-    let (msk, mpk) = lw.setup(&mut rng);
-
-    let identity = parse_identity("A");
-    let other = parse_identity("B");
-
-    let usk = lw.keygen(&mut rng, &msk, identity);
-    let k = Gt::rand(&mut rng);
-    let ct = lw.encrypt(&mut rng, &k, &mpk, other);
-    let dec = lw.decrypt(&usk, &ct);
-
+fn test_decrypt_fail(user_identity: &str, ct_identity: &str, identity_extension: Option<&str>) {
+    let (_, dec) = run_scheme(user_identity, ct_identity, identity_extension);
     assert!(dec.is_none());
 }
 
 #[test]
-fn lw_decrypt_hierarchy_mismatch_fail() {
-    let mut rng = thread_rng();
-
-    let lw = LW::new();
-    let (msk, mpk) = lw.setup(&mut rng);
-
-    let identity = parse_identity("A.B.C.D");
-    let other = parse_identity("A.b.C.D");
-
-    let usk = lw.keygen(&mut rng, &msk, identity);
-    let k = Gt::rand(&mut rng);
-    let ct = lw.encrypt(&mut rng, &k, &mpk, other);
-    let dec = lw.decrypt(&usk, &ct);
-
-    assert!(dec.is_none());
+fn lw_minimal_ok() {
+    test_decrypt_ok("A", "A", None);
 }
 
 #[test]
-fn lw_decrypt_inferior_fail() {
-    let mut rng = thread_rng();
-
-    let lw = LW::new();
-    let (msk, mpk) = lw.setup(&mut rng);
-
-    let inferior = parse_identity("A.B.C.D");
-    let identity = parse_identity("A.B.C");
-
-    let usk = lw.keygen(&mut rng, &msk, inferior);
-    let k = Gt::rand(&mut rng);
-    let ct = lw.encrypt(&mut rng, &k, &mpk, identity);
-    let dec = lw.decrypt(&usk, &ct);
-
-    assert!(dec.is_none());
+fn lw_exact_match_ok() {
+    test_decrypt_ok("A.B.C.D", "A.B.C.D", None);
 }
 
 #[test]
-fn lw_decrypt_delegate_ok() {
-    let mut rng = thread_rng();
-
-    let lw = LW::new();
-    let (msk, mpk) = lw.setup(&mut rng);
-
-    let identity = parse_identity("A.B.C");
-    let usk = lw.keygen(&mut rng, &msk, identity.clone());
-
-    let identity_inferior = parse_identity("A.B.C.D");
-    let usk_inferior = lw.delegate(&mut rng, &mpk, &usk, identity.clone(), String::from("D"));
-
-    let k = Gt::rand(&mut rng);
-    let ct = lw.encrypt(&mut rng, &k, &mpk, identity_inferior);
-    let dec = lw.decrypt(&usk_inferior, &ct);
-
-    assert!(dec.is_some_and(|k_dec| k_dec == k));
+fn lw_superior_ok() {
+    test_decrypt_ok("A.B.C", "A.B.C.D", None);
 }
 
 #[test]
-fn lw_decrypt_delegate_minimal_ok() {
-    let mut rng = thread_rng();
-
-    let lw = LW::new();
-    let (msk, mpk) = lw.setup(&mut rng);
-
-    let identity = parse_identity("A");
-    let usk = lw.keygen(&mut rng, &msk, identity.clone());
-
-    let identity_inferior = parse_identity("A.B");
-    let usk_inferior = lw.delegate(&mut rng, &mpk, &usk, identity.clone(), String::from("B"));
-
-    let k = Gt::rand(&mut rng);
-    let ct = lw.encrypt(&mut rng, &k, &mpk, identity_inferior);
-    let dec = lw.decrypt(&usk_inferior, &ct);
-
-    assert!(dec.is_some_and(|k_dec| k_dec == k));
+fn lw_root_ok() {
+    test_decrypt_ok("A", "A.B.C", None);
 }
 
 #[test]
-fn lw_decrypt_delegate_superior_ok() {
-    let mut rng = thread_rng();
-
-    let lw = LW::new();
-    let (msk, mpk) = lw.setup(&mut rng);
-
-    let identity = parse_identity("A.B");
-    let usk = lw.keygen(&mut rng, &msk, identity.clone());
-
-    let usk_inferior = lw.delegate(&mut rng, &mpk, &usk, identity.clone(), String::from("C"));
-    let identity_ct = parse_identity("A.B.C.D");
-
-    let k = Gt::rand(&mut rng);
-    let ct = lw.encrypt(&mut rng, &k, &mpk, identity_ct);
-    let dec = lw.decrypt(&usk_inferior, &ct);
-
-    assert!(dec.is_some_and(|k_dec| k_dec == k));
+fn lw_minimal_fail() {
+    test_decrypt_fail("A", "B", None);
 }
 
 #[test]
-fn lw_decrypt_delegate_hierarchy_mismatch_fail() {
-    let mut rng = thread_rng();
+fn lw_hierarchy_mismatch_fail() {
+    test_decrypt_fail("A.B.C.D", "A.b.C.D", None);
+}
 
-    let lw = LW::new();
-    let (msk, mpk) = lw.setup(&mut rng);
+#[test]
+fn lw_inferior_fail() {
+    test_decrypt_fail("A.B.C.D", "A.B.C", None);
+}
 
-    let identity = parse_identity("A.b.C");
-    let usk = lw.keygen(&mut rng, &msk, identity.clone());
+#[test]
+fn lw_delegate_ok() {
+    test_decrypt_ok("A.B.C", "A.B.C.D", Some("D"));
+}
 
-    let usk_inferior = lw.delegate(&mut rng, &mpk, &usk, identity.clone(), String::from("D"));
-    let identity_inferior = parse_identity("A.B.C.D");
+#[test]
+fn lw_delegate_minimal_ok() {
+    test_decrypt_ok("A", "A.B", Some("B"));
+}
 
-    let k = Gt::rand(&mut rng);
-    let ct = lw.encrypt(&mut rng, &k, &mpk, identity_inferior);
-    let dec = lw.decrypt(&usk_inferior, &ct);
+#[test]
+fn lw_delegate_superior_ok() {
+    test_decrypt_ok("A.B", "A.B.C.D", Some("C"));
+}
 
-    assert!(dec.is_none());
+#[test]
+fn lw_delegate_hierarchy_mismatch_fail() {
+    test_decrypt_fail("A.b.C", "A.B.C.D", Some("D"));
 }
