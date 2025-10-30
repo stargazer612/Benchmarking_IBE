@@ -1,7 +1,7 @@
 use ark_bls12_381::{Bls12_381, Fq12 as Gt, Fr, G1Projective as G1, G2Projective as G2};
 use ark_ec::PrimeGroup;
 use ark_ec::pairing::Pairing;
-use ark_ff::{Field, One, PrimeField, UniformRand, Zero};
+use ark_ff::{Field, PrimeField, UniformRand, Zero};
 use ark_std::rand::Rng;
 
 use crate::hash_to_fr;
@@ -54,23 +54,15 @@ impl LW {
 
         let g1 = G1::generator();
         let g2 = G2::generator();
-        let a = Bls12_381::pairing(g1 * alpha, g2).0;
-
-        let b_g1 = g1 * b;
-        let b_g2 = g2 * b;
-        let b_0_g1 = g1 * b_0;
-        let b_0_g2 = g2 * b_0;
-        let b_1_g1 = g1 * b_1;
-        let b_1_g2 = g2 * b_1;
 
         let mpk = MPK {
-            a,
-            b_g1,
-            b_g2,
-            b_0_g1,
-            b_0_g2,
-            b_1_g1,
-            b_1_g2,
+            a: Bls12_381::pairing(g1 * alpha, g2).0,
+            b_g1: g1 * b,
+            b_g2: g2 * b,
+            b_0_g1: g1 * b_0,
+            b_0_g2: g2 * b_0,
+            b_1_g1: g1 * b_1,
+            b_1_g2: g2 * b_1,
         };
 
         (msk, mpk)
@@ -81,32 +73,19 @@ impl LW {
         assert!(n_k > 0);
 
         let g2 = G2::generator();
+        let rs = sample_fr(&mut rng, n_k);
+        let lambdas = share_secret(&mut rng, msk.alpha, n_k);
 
-        let mut k = Vec::with_capacity(n_k);
+        let k = rs.iter().map(|r| g2 * r).collect();
+
         let mut k_1 = Vec::with_capacity(n_k);
-        let mut k_2 = Vec::with_capacity(n_k);
-
-        let mut rs = Vec::with_capacity(n_k);
-        for _ in 0..n_k {
-            let r_i = Fr::rand(&mut rng);
-            rs.push(r_i);
-            k.push(g2 * r_i);
-        }
-
-        let mut lambdas = Vec::with_capacity(n_k);
-        let mut sum = Fr::zero();
-        lambdas.push(Fr::zero());
-        for _ in 1..n_k {
-            let lambda_i = Fr::rand(&mut rng);
-            sum += lambda_i;
-            lambdas.push(lambda_i);
-        }
-        lambdas[0] = msk.alpha - sum;
-
         for i in 0..n_k {
-            let e_1 = lambdas[i] + rs[i] * msk.b;
-            k_1.push(g2 * e_1);
+            let e = lambdas[i] + rs[i] * msk.b;
+            k_1.push(g2 * e);
+        }
 
+        let mut k_2 = Vec::with_capacity(n_k);
+        for i in 0..n_k {
             let xid = hash_to_fr(&identity[i]);
             let e_2 = rs[i] * (msk.b_0 + xid * msk.b_1);
             k_2.push(g2 * e_2);
@@ -126,33 +105,20 @@ impl LW {
 
         let g1 = G1::generator();
         let s = Fr::rand(&mut rng);
-        let c = g1 * s;
+        let ss = sample_fr(&mut rng, n_c);
+
+        let c_i_alt = ss.iter().map(|s| g1 * s).collect();
 
         let mut c_i = Vec::with_capacity(n_c);
-        let mut c_i_alt = Vec::with_capacity(n_c);
-
-        let mut ss = Vec::with_capacity(n_c);
-        for _ in 0..n_c {
-            let s_i = Fr::rand(&mut rng);
-            ss.push(s_i);
-            c_i_alt.push(g1 * s_i);
-        }
-
         for i in 0..n_c {
             let xid = hash_to_fr(&identity[i]);
-            let e = ss[i] * xid;
-
-            let c_1 = mpk.b_g1 * s;
-            let c_2 = mpk.b_0_g1 * ss[i];
-            let c_3 = mpk.b_1_g1 * e;
-
-            c_i.push(c_1 + c_2 + c_3);
+            c_i.push(mpk.b_g1 * s + (mpk.b_0_g1 + mpk.b_1_g1 * xid) * ss[i]);
         }
 
         CT {
             identity: identity.clone(),
             msg: mpk.a.pow(s.into_bigint()) * msg,
-            c,
+            c: g1 * s,
             c_i,
             c_i_alt,
         }
@@ -164,60 +130,23 @@ impl LW {
         mpk: &MPK,
         usk: &USK,
         identity: Vec<String>,
-        new_identity: String,
+        identity_extension: String,
     ) -> USK {
         let n_k = identity.len();
         assert!(n_k > 0);
 
-        let g2 = G2::generator();
+        let lambdas = sample_fr(&mut rng, n_k);
+        let rs = sample_fr(&mut rng, n_k + 1);
 
-        let mut lambdas = Vec::with_capacity(n_k);
-        let mut sum = Fr::zero();
-        for _ in 0..n_k {
-            let lambda_i = Fr::rand(&mut rng);
-            lambdas.push(lambda_i);
-            sum += lambda_i;
-        }
+        let mut new_identity = identity.clone();
+        new_identity.push(identity_extension.clone());
 
-        let mut rs = Vec::with_capacity(n_k + 1);
-        for _ in 0..(n_k + 1) {
-            let r_i = Fr::rand(&mut rng);
-            rs.push(r_i);
-        }
-
-        let mut identity = identity.clone();
-        identity.push(new_identity.clone());
-
-        let mut new_k = usk.k.clone();
-        for i in 0..n_k {
-            new_k[i] = new_k[i] + g2 * rs[i];
-        }
-        new_k.push(g2 * rs[n_k]);
-
-        let mut new_k1 = usk.k_1.clone();
-        for i in 0..n_k {
-            let k_1 = new_k1[i];
-            let k_2 = g2 * lambdas[i];
-            let k_3 = mpk.b_g2 * rs[i];
-            new_k1[i] = k_1 + k_2 + k_3;
-        }
-        new_k1.push(g2 * (-sum) + mpk.b_g2 * rs[n_k]);
-
-        let mut new_k2 = usk.k_2.clone();
-        for i in 0..n_k {
-            let k_1 = new_k2[i];
-            let k_2 = mpk.b_0_g2 * rs[i];
-            let xid = hash_to_fr(&identity[i]);
-            let k_3 = mpk.b_1_g2 * (xid * rs[i]);
-            new_k2[i] = k_1 + k_2 + k_3;
-        }
-        let tmp1 = mpk.b_0_g2 * rs[n_k];
-        let xid = hash_to_fr(&new_identity);
-        let tmp2 = mpk.b_1_g2 * (xid * rs[n_k]);
-        new_k2.push(tmp1 + tmp2);
+        let new_k = update_k(&usk, &rs);
+        let new_k1 = update_k1(&mpk, &usk, &rs, &lambdas);
+        let new_k2 = update_k2(&mpk, &usk, &rs, &new_identity, &identity_extension);
 
         USK {
-            identity,
+            identity: new_identity,
             k: new_k,
             k_1: new_k1,
             k_2: new_k2,
@@ -226,29 +155,96 @@ impl LW {
 
     pub fn decrypt(&self, usk: &USK, ct: &CT) -> Option<Gt> {
         let n_k = usk.identity.len();
-        let n_c = ct.identity.len();
         assert!(n_k > 0);
-        if n_k > n_c {
+
+        if !can_decrypt(&usk.identity, &ct.identity) {
             return None;
         }
 
-        for i in 0..n_k {
-            if usk.identity[i] != ct.identity[i] {
-                return None;
-            }
-        }
-
-        let mut result = Gt::one();
+        let sum: G2 = usk.k_1.iter().sum();
+        let mut result = Bls12_381::pairing(ct.c, sum).0;
 
         for i in 0..n_k {
-            let tmp_1 = Bls12_381::pairing(ct.c, usk.k_1[i]).0;
-            let tmp_2 = Bls12_381::pairing(-ct.c_i[i], usk.k[i]).0;
-            let tmp_3 = Bls12_381::pairing(ct.c_i_alt[i], usk.k_2[i]).0;
-
-            let tmp = tmp_1 * tmp_2 * tmp_3;
-            result *= tmp;
+            result *= Bls12_381::pairing(-ct.c_i[i], usk.k[i]).0;
+            result *= Bls12_381::pairing(ct.c_i_alt[i], usk.k_2[i]).0;
         }
 
         Some(ct.msg / result)
     }
+}
+
+fn sample_fr(mut rng: impl Rng, n: usize) -> Vec<Fr> {
+    let mut result = Vec::with_capacity(n);
+    for _ in 0..n {
+        result.push(Fr::rand(&mut rng));
+    }
+    result
+}
+
+fn share_secret(mut rng: impl Rng, secret: Fr, n: usize) -> Vec<Fr> {
+    let mut shares = Vec::with_capacity(n);
+    let mut sum = Fr::zero();
+    shares.push(Fr::zero());
+    for _ in 1..n {
+        let share_i = Fr::rand(&mut rng);
+        sum += share_i;
+        shares.push(share_i);
+    }
+    shares[0] = secret - sum;
+    shares
+}
+
+fn can_decrypt(key: &Vec<String>, ct: &Vec<String>) -> bool {
+    let is_shorter = key.len() <= ct.len();
+    let prefix_matches = key.iter().zip(ct.iter()).all(|(x, y)| x == y);
+    is_shorter && prefix_matches
+}
+
+fn update_k(usk: &USK, rs: &Vec<Fr>) -> Vec<G2> {
+    let g2 = G2::generator();
+    let mut new_k = usk.k.clone();
+    let n_k = new_k.len();
+    for i in 0..n_k {
+        new_k[i] = new_k[i] + g2 * rs[i];
+    }
+    new_k.push(g2 * rs[n_k]);
+    new_k
+}
+
+fn update_k1(mpk: &MPK, usk: &USK, rs: &Vec<Fr>, lambdas: &Vec<Fr>) -> Vec<G2> {
+    let g2 = G2::generator();
+    let sum: Fr = lambdas.iter().sum();
+    let mut new_k1 = usk.k_1.clone();
+    let n_k = new_k1.len();
+    for i in 0..n_k {
+        let k_1 = new_k1[i];
+        let k_2 = g2 * lambdas[i];
+        let k_3 = mpk.b_g2 * rs[i];
+        new_k1[i] = k_1 + k_2 + k_3;
+    }
+    new_k1.push(g2 * (-sum) + mpk.b_g2 * rs[n_k]);
+    new_k1
+}
+
+fn update_k2(
+    mpk: &MPK,
+    usk: &USK,
+    rs: &Vec<Fr>,
+    new_identity: &Vec<String>,
+    identity_extension: &String,
+) -> Vec<G2> {
+    let mut new_k2 = usk.k_2.clone();
+    let n_k = new_k2.len();
+    for i in 0..n_k {
+        let k_1 = new_k2[i];
+        let k_2 = mpk.b_0_g2 * rs[i];
+        let xid = hash_to_fr(&new_identity[i]);
+        let k_3 = mpk.b_1_g2 * (xid * rs[i]);
+        new_k2[i] = k_1 + k_2 + k_3;
+    }
+    let tmp1 = mpk.b_0_g2 * rs[n_k];
+    let xid = hash_to_fr(&identity_extension);
+    let tmp2 = mpk.b_1_g2 * (xid * rs[n_k]);
+    new_k2.push(tmp1 + tmp2);
+    new_k2
 }
