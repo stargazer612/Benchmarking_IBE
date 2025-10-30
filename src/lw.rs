@@ -228,7 +228,9 @@ impl LW {
         let n_k = usk.identity.len();
         let n_c = ct.identity.len();
         assert!(n_k > 0);
-        assert!(n_k <= n_c);
+        if n_k > n_c {
+            return None;
+        }
 
         for i in 0..n_k {
             if usk.identity[i] != ct.identity[i] {
