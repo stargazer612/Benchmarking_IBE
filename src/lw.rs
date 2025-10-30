@@ -188,20 +188,20 @@ impl LW {
         let mut identity = identity.clone();
         identity.push(new_identity.clone());
 
-        let mut new_k = usk.k_1.clone();
+        let mut new_k = usk.k.clone();
         for i in 0..n_k {
             new_k[i] = new_k[i] + g2 * rs[i];
         }
         new_k.push(g2 * rs[n_k]);
 
-        let mut new_k1 = usk.k.clone();
+        let mut new_k1 = usk.k_1.clone();
         for i in 0..n_k {
             let k_1 = new_k1[i];
             let k_2 = g2 * lambdas[i];
             let k_3 = mpk.b_g2 * rs[i];
             new_k1[i] = k_1 + k_2 + k_3;
         }
-        new_k1.push(g2 * (-sum));
+        new_k1.push(g2 * (-sum) + mpk.b_g2 * rs[n_k]);
 
         let mut new_k2 = usk.k_2.clone();
         for i in 0..n_k {

@@ -132,3 +132,83 @@ fn lw_decrypt_inferior_fail() {
 
     assert!(dec.is_none());
 }
+
+#[test]
+fn lw_decrypt_delegate_ok() {
+    let mut rng = thread_rng();
+
+    let lw = LW::new();
+    let (msk, mpk) = lw.setup(&mut rng);
+
+    let identity = parse_identity("A.B.C");
+    let usk = lw.keygen(&mut rng, &msk, identity.clone());
+
+    let identity_inferior = parse_identity("A.B.C.D");
+    let usk_inferior = lw.delegate(&mut rng, &mpk, &usk, identity.clone(), String::from("D"));
+
+    let k = Gt::rand(&mut rng);
+    let ct = lw.encrypt(&mut rng, &k, &mpk, identity_inferior);
+    let dec = lw.decrypt(&usk_inferior, &ct);
+
+    assert!(dec.is_some_and(|k_dec| k_dec == k));
+}
+
+#[test]
+fn lw_decrypt_delegate_minimal_ok() {
+    let mut rng = thread_rng();
+
+    let lw = LW::new();
+    let (msk, mpk) = lw.setup(&mut rng);
+
+    let identity = parse_identity("A");
+    let usk = lw.keygen(&mut rng, &msk, identity.clone());
+
+    let identity_inferior = parse_identity("A.B");
+    let usk_inferior = lw.delegate(&mut rng, &mpk, &usk, identity.clone(), String::from("B"));
+
+    let k = Gt::rand(&mut rng);
+    let ct = lw.encrypt(&mut rng, &k, &mpk, identity_inferior);
+    let dec = lw.decrypt(&usk_inferior, &ct);
+
+    assert!(dec.is_some_and(|k_dec| k_dec == k));
+}
+
+#[test]
+fn lw_decrypt_delegate_superior_ok() {
+    let mut rng = thread_rng();
+
+    let lw = LW::new();
+    let (msk, mpk) = lw.setup(&mut rng);
+
+    let identity = parse_identity("A.B");
+    let usk = lw.keygen(&mut rng, &msk, identity.clone());
+
+    let usk_inferior = lw.delegate(&mut rng, &mpk, &usk, identity.clone(), String::from("C"));
+    let identity_ct = parse_identity("A.B.C.D");
+
+    let k = Gt::rand(&mut rng);
+    let ct = lw.encrypt(&mut rng, &k, &mpk, identity_ct);
+    let dec = lw.decrypt(&usk_inferior, &ct);
+
+    assert!(dec.is_some_and(|k_dec| k_dec == k));
+}
+
+#[test]
+fn lw_decrypt_delegate_hierarchy_mismatch_fail() {
+    let mut rng = thread_rng();
+
+    let lw = LW::new();
+    let (msk, mpk) = lw.setup(&mut rng);
+
+    let identity = parse_identity("A.b.C");
+    let usk = lw.keygen(&mut rng, &msk, identity.clone());
+
+    let usk_inferior = lw.delegate(&mut rng, &mpk, &usk, identity.clone(), String::from("D"));
+    let identity_inferior = parse_identity("A.B.C.D");
+
+    let k = Gt::rand(&mut rng);
+    let ct = lw.encrypt(&mut rng, &k, &mpk, identity_inferior);
+    let dec = lw.decrypt(&usk_inferior, &ct);
+
+    assert!(dec.is_none());
+}
