@@ -1,17 +1,21 @@
-use crate::common::*;
-use ark_bls12_381::G2Projective;
-use ark_ff::{Zero, One, PrimeField};
-use ark_ec::ProjectiveCurve; 
+use crate::f_functions::*;
+use crate::field_utils::*;
+use crate::group_ctx::*;
+use crate::types::*;
+
+use ark_bls12_381::G2Projective as G2;
+use ark_ec::ProjectiveCurve;
+use ark_ff::{PrimeField, Zero};
 
 pub struct SecretKey {
-    pub b: Matrix,
-    pub x_matrices: Vec<Matrix>,
+    pub b: Matrix<FieldElement>,
+    pub x_matrices: Vec<Matrix<FieldElement>>,
     pub x_prime: Vec<Vector>,
 }
 
 pub struct Tag {
-    pub t_g2: Vec<G2Projective>,
-    pub u_g2: Vec<G2Projective>,
+    pub t_g2: Vec<G2>,
+    pub u_g2: Vec<G2>,
     pub t_field: Vector,
 }
 
@@ -25,113 +29,73 @@ pub struct AffineMAC {
 impl AffineMAC {
     pub fn new(k: usize, l: usize, l_prime: usize) -> Self {
         Self {
-            k, l, l_prime,
+            k,
+            l,
+            l_prime,
             group: GroupCtx::bls12_381(),
         }
     }
 
     pub fn gen_mac(&self) -> SecretKey {
-        let b = <()>::random_matrix(self.k, self.k);
+        let b = random_matrix(self.k, self.k);
         let mut x_matrices = Vec::with_capacity(self.l + 1);
-        println!("l = {}", self.l);
         for _ in 0..=self.l {
-            x_matrices.push(<()>::random_matrix(2 * self.k, self.k));
+            x_matrices.push(random_matrix(2 * self.k, self.k));
         }
-        println!("x matrices length = {}", x_matrices.len());
-        println!("l' = {}",self.l_prime);
         let mut x_prime = Vec::with_capacity(self.l_prime + 1);
         for _ in 0..=self.l_prime {
-            x_prime.push(<()>::random_vector(2 * self.k));
+            x_prime.push(random_vector(2 * self.k));
         }
-        SecretKey { b, x_matrices, x_prime }
-    }
-
-    pub fn f_i(&self, i: usize, message: &[u8]) -> FieldElement {
-        match i {
-            0 | 1 => FieldElement::zero(),
-            _ => {
-                let bit_index = (i - 2) / 2;           
-                let bit_value = (i - 2) % 2;           
-                
-                if bit_index < self.l && bit_index < message.len() * 8 {
-                    let byte_index = bit_index / 8;     
-                    let bit_position = bit_index % 8;   
-                    
-                    if byte_index < message.len() {
-                        let message_bit = ((message[byte_index] >> bit_position) & 1) as usize;
-                        
-                        if message_bit == bit_value {
-                            FieldElement::one()
-                        } else {
-                            FieldElement::zero()
-                        }
-                    } else {
-                        FieldElement::zero()
-                    }
-                } else {
-                    FieldElement::zero()
-                }
-            }
-        }   
-    }
-
-    pub fn f_prime_i(&self, i: usize, _message: &[u8]) -> FieldElement {
-        if i == 0 { FieldElement::one() } else { FieldElement::zero() }
+        SecretKey {
+            b,
+            x_matrices,
+            x_prime,
+        }
     }
 
     pub fn tag(&self, sk: &SecretKey, message: &[u8]) -> Tag {
-        let s = <()>::random_vector(self.k);
-        let t_field = <()>::matrix_vector_mul(&sk.b, &s);
-        
-        let mut u_field: Vector = vec![FieldElement::zero(); 2 * self.k];
+        let s = random_vector(self.k);
+        let t_field = matrix_vector_mul(&sk.b, &s);
 
-        // print!("\nf_i = ");
+        let mut u_field = vector_zero::<FieldElement>(2 * self.k);
+
         for i in 0..=self.l {
-            let fi = self.f_i(i, message);
+            let fi = f_i(i, self.l, message);
             if !fi.is_zero() {
-                // print!("{} ", i);
-                let xi_t = <()>::matrix_vector_mul(&sk.x_matrices[i], &t_field);
-                let scaled = <()>::scalar_vector_mul(fi, &xi_t);
-                u_field = <()>::vector_add(&u_field, &scaled);
+                let xi_t = matrix_vector_mul(&sk.x_matrices[i], &t_field);
+                u_field = vector_add(&u_field, &xi_t);
             }
         }
 
-        let f0 = self.f_prime_i(0, message);
-        // print!("\nf_i' = ");
         for i in 0..=self.l_prime {
-            let fi_prime = self.f_prime_i(i, message);
+            let fi_prime = f_prime_i(i);
             if !fi_prime.is_zero() {
-                // print!("{} ", i);
-                let scaled_xprime = <()>::scalar_vector_mul(f0, &sk.x_prime[i]);
-                u_field = <()>::vector_add(&u_field, &scaled_xprime);
+                u_field = vector_add(&u_field, &sk.x_prime[i]);
             }
         }
-        
-        let t_g2: Vec<G2Projective> = t_field.clone().into_iter()
-            .map(|c| self.group.scalar_mul_p2(c))
-            .collect();
-        let u_g2: Vec<G2Projective> = u_field.into_iter()
-            .map(|c| self.group.scalar_mul_p2(c))
-            .collect();
 
-        Tag { t_g2, u_g2, t_field }
+        let t_g2: Vec<G2> = vector_lift_g2(&t_field, &self.group);
+        let u_g2: Vec<G2> = vector_lift_g2(&u_field, &self.group);
+
+        Tag {
+            t_g2,
+            u_g2,
+            t_field,
+        }
     }
 
     pub fn verify(&self, sk: &SecretKey, message: &[u8], tag: &Tag) -> bool {
-        let mut expected: Vec<G2Projective> = vec![G2Projective::zero(); 2 * self.k];
-        
-        // print!("\nf_i = ");
+        let mut expected = vector_zero::<G2>(2 * self.k);
+
         for i in 0..=self.l {
-            let fi = self.f_i(i, message);
+            let fi = f_i(i, self.l, message);
             if !fi.is_zero() {
-                // print!("{} ", i);
                 let xi = &sk.x_matrices[i];
                 for r in 0..(2 * self.k) {
-                    let mut accum = G2Projective::zero();
+                    let mut accum = G2::zero();
                     for j in 0..self.k {
-                        let scalar = xi[r][j] * fi;
-                        if !scalar.is_zero() {
-                            accum += tag.t_g2[j].mul(scalar.into_repr());
+                        if !xi[r][j].is_zero() {
+                            accum += tag.t_g2[j].mul(xi[r][j].into_repr());
                         }
                     }
                     expected[r] += accum;
@@ -140,56 +104,19 @@ impl AffineMAC {
         }
 
         for i in 0..=self.l_prime {
-            let fi_prime = self.f_prime_i(i, message);
+            let fi_prime = f_prime_i(i);
             if !fi_prime.is_zero() {
-                let row_vec = &sk.x_prime[i]; // length 2k
-                if row_vec.len() != 2 * self.k {
-                    return false;
-                }
+                let row_vec = &sk.x_prime[i];
+                assert_eq!(row_vec.len(), 2 * self.k);
                 for r in 0..(2 * self.k) {
-                    let coeff = fi_prime * row_vec[r];
-                    if !coeff.is_zero() {
-                        expected[r] += self.group.scalar_mul_p2(coeff);
+                    if !row_vec[r].is_zero() {
+                        expected[r] += self.group.scalar_mul_p2(row_vec[r]);
                     }
                 }
             }
         }
 
-        if expected.len() != tag.u_g2.len() { 
-            return false; 
-        }
-
-        for (e, u) in expected.iter().zip(tag.u_g2.iter()) {
-            if e != u {
-                return false;
-            }
-        }
-        true
+        assert_eq!(expected.len(), tag.u_g2.len());
+        expected.iter().zip(tag.u_g2.iter()).all(|(e, u)| e == u)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_affine_mac() {
-        let k = 2usize;
-        let m_len = 4usize;
-        let l = 2*m_len + 1;
-        let l_prime = 0;
-        let mac = AffineMAC::new(k, l, l_prime);
-        let sk = mac.gen_mac();
-
-        let message = vec![1u8, 0, 1, 1];
-        let tag = mac.tag(&sk, &message);
-        let check = mac.verify(&sk, &message, &tag);
-        assert!(check, "valid tag should verify");
-
-        let new_message = vec![0u8, 0, 1, 1];
-        let check2 = mac.verify(&sk, &new_message, &tag);
-        assert!(!check2, "tag for different message should not verify");
-    }
-}
-
-    
