@@ -1,4 +1,5 @@
 pub mod affine_mac;
+pub mod bf;
 pub mod blake3;
 pub mod f_functions;
 pub mod field_utils;
@@ -18,6 +19,5 @@ pub use group_ctx::*;
 pub use hashing::*;
 pub use ibkem1::*;
 pub use ibkem2::*;
-pub use lw::*;
 pub use qanizk::*;
 pub use types::*;
