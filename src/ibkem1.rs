@@ -157,7 +157,7 @@ impl IBKEM1 {
             let fi_prime = f_prime_i(i);
             if !fi_prime.is_zero() {
                 let zi_prime_dot_r = vector_dot_g1(&r, &pk.z_prime_vectors[i]);
-                pairing_pairs.push((zi_prime_dot_r, self.group.p2.clone()));
+                pairing_pairs.push((zi_prime_dot_r, self.group.g2.clone()));
             }
         }
 

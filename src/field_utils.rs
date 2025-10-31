@@ -1,6 +1,6 @@
 use ark_bls12_381::{G1Affine, G1Projective as G1, G2Projective as G2};
-use ark_ec::{ProjectiveCurve, msm::VariableBaseMSM};
-use ark_ff::{PrimeField, UniformRand, Zero};
+use ark_ec::{CurveGroup, VariableBaseMSM};
+use ark_ff::{UniformRand, Zero};
 use ark_std::ops::Add;
 use rand::thread_rng;
 
@@ -44,7 +44,7 @@ pub fn vector_dot_g1(a: &Vector, b: &Vec<G1>) -> G1 {
     assert_eq!(a.len(), b.len());
     let mut sum = G1::zero();
     for i in 0..a.len() {
-        sum += b[i].mul(a[i].into_repr());
+        sum += b[i] * a[i];
     }
     sum
 }
@@ -78,7 +78,7 @@ pub fn matrix_multiply_scalar(a: &Matrix<G1>, x: FieldElement) -> Matrix<G1> {
     let mut result = matrix_zero::<G1>(rows, cols);
     for i in 0..rows {
         for j in 0..cols {
-            result[i][j] = a[i][j].mul(x.into_repr());
+            result[i][j] = a[i][j] * x;
         }
     }
     result
@@ -165,11 +165,7 @@ pub fn group_matrix_vector_mul_msm(matrix_g1: &Matrix<G1>, vector: &Vector) -> V
         .iter()
         .map(|row| {
             let row_affine: Vec<G1Affine> = row.iter().map(|g| g.into_affine()).collect();
-
-            let scalars_repr: Vec<<FieldElement as PrimeField>::BigInt> =
-                vector.iter().map(|s| s.into_repr()).collect();
-
-            VariableBaseMSM::multi_scalar_mul(&row_affine, &scalars_repr)
+            G1::msm(&row_affine, &vector).unwrap()
         })
         .collect()
 }
@@ -191,7 +187,7 @@ pub fn g1_matrix_field_multiply(
         for j in 0..cols_right {
             let mut sum = G1::zero();
             for k in 0..cols_left {
-                let scaled = left_g1[i][k].mul(right_field[k][j].into_repr());
+                let scaled = left_g1[i][k] * right_field[k][j];
                 sum = sum + scaled;
             }
             result[i][j] = sum;

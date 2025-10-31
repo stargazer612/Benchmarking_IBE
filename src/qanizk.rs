@@ -4,7 +4,7 @@ use crate::hashing::*;
 use crate::types::*;
 
 use ark_bls12_381::{G1Affine, G1Projective as G1, G2Projective as G2};
-use ark_ec::{ProjectiveCurve, msm::VariableBaseMSM};
+use ark_ec::{CurveGroup, VariableBaseMSM};
 use ark_ff::{BigInteger, One, PrimeField};
 
 use bit_vec::BitVec;
@@ -97,13 +97,13 @@ impl QANIZK {
         input.extend_from_slice(tag);
 
         for point in c0_g1 {
-            input.extend_from_slice(&point.into_affine().x.into_repr().to_bytes_le());
-            input.extend_from_slice(&point.into_affine().y.into_repr().to_bytes_le());
+            input.extend_from_slice(&point.into_affine().x.into_bigint().to_bytes_le());
+            input.extend_from_slice(&point.into_affine().y.into_bigint().to_bytes_le());
         }
 
         for point in t1 {
-            input.extend_from_slice(&point.into_affine().x.into_repr().to_bytes_le());
-            input.extend_from_slice(&point.into_affine().y.into_repr().to_bytes_le());
+            input.extend_from_slice(&point.into_affine().x.into_bigint().to_bytes_le());
+            input.extend_from_slice(&point.into_affine().y.into_bigint().to_bytes_le());
         }
 
         input
@@ -133,8 +133,7 @@ impl QANIZK {
             }
 
             let bases_affine: Vec<G1Affine> = bases.iter().map(|g| g.into_affine()).collect();
-            let scalars_repr: Vec<_> = scalars.iter().map(|s| s.into_repr()).collect();
-            result[col] = VariableBaseMSM::multi_scalar_mul(&bases_affine, &scalars_repr);
+            result[col] = G1::msm(&bases_affine, &scalars).unwrap();
         }
 
         result

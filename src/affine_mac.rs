@@ -4,8 +4,7 @@ use crate::group_ctx::*;
 use crate::types::*;
 
 use ark_bls12_381::G2Projective as G2;
-use ark_ec::ProjectiveCurve;
-use ark_ff::{PrimeField, Zero};
+use ark_ff::Zero;
 
 pub struct SecretKey {
     pub b: Matrix<FieldElement>,
@@ -95,7 +94,7 @@ impl AffineMAC {
                     let mut accum = G2::zero();
                     for j in 0..self.k {
                         if !xi[r][j].is_zero() {
-                            accum += tag.t_g2[j].mul(xi[r][j].into_repr());
+                            accum += tag.t_g2[j] * xi[r][j];
                         }
                     }
                     expected[r] += accum;
