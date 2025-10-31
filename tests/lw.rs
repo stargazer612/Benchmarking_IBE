@@ -1,7 +1,7 @@
 use ark_bls12_381::Fq12 as Gt;
 use ark_ff::UniformRand;
 
-use ibe_schemes::*;
+use ibe_schemes::lw::*;
 
 use rand::thread_rng;
 
