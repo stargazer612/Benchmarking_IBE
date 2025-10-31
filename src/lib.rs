@@ -1,4 +1,5 @@
 pub mod affine_mac;
+pub mod bb;
 pub mod bf;
 pub mod blake3;
 pub mod f_functions;
