@@ -1,4 +1,9 @@
-use ark_bls12_381::Fr;
+use ark_bls12_381::g1::Config as G1Config;
+use ark_bls12_381::{Fr, G1Affine};
+use ark_ec::hashing::HashToCurve;
+use ark_ec::hashing::curve_maps::wb::WBMap;
+use ark_ec::hashing::map_to_curve_hasher::MapToCurveBasedHasher;
+use ark_ec::short_weierstrass::Projective;
 use ark_ff::fields::field_hashers::{DefaultFieldHasher, HashToField};
 
 use bit_vec::BitVec;
@@ -55,9 +60,23 @@ pub fn generate_email_and_hash_identity(bits: usize) -> (Vec<u8>, Vec<u8>) {
 }
 
 const IDENT_DOMAIN: &str = "IDENTITY";
+const DEFAULT_FIELD_HASHER_SEC_PARAM: usize = 128;
 
 pub fn hash_to_fr(id: &str) -> Fr {
     let domain = IDENT_DOMAIN.as_bytes();
     let hasher = <DefaultFieldHasher<Blake3> as HashToField<Fr>>::new(domain);
     hasher.hash_to_field::<1>(id.as_bytes())[0]
+}
+
+pub fn hash_to_g1(id: &str) -> G1Affine {
+    let domain = IDENT_DOMAIN.as_bytes();
+    let g_mapper = MapToCurveBasedHasher::<
+        Projective<G1Config>,
+        DefaultFieldHasher<Blake3, DEFAULT_FIELD_HASHER_SEC_PARAM>,
+        WBMap<G1Config>,
+    >::new(domain)
+    .unwrap();
+    let mut input = Vec::new();
+    input.extend_from_slice(&blake3_hash_bytes(id.as_bytes()));
+    g_mapper.hash(input.as_slice()).unwrap()
 }
