@@ -4,7 +4,7 @@ use ark_ec::pairing::Pairing;
 use ark_ff::{Field, PrimeField, UniformRand};
 use ark_std::rand::Rng;
 
-use crate::hash_to_fr;
+use crate::hash_to_g1;
 
 pub struct MSK {
     pub alpha: Fr,
@@ -17,13 +17,13 @@ pub struct MPK {
 pub struct USK {
     pub identity: String,
     pub r: G2,
-    pub k: G2,
+    pub k: G1,
 }
 
 pub struct CT {
     pub identity: String,
     pub msg: Gt,
-    pub s: G1,
+    pub s: G2,
     pub c: G1,
 }
 
@@ -49,28 +49,29 @@ impl BF {
     }
 
     pub fn keygen(&self, mut rng: impl Rng, msk: &MSK, identity: String) -> USK {
+        let g1 = G1::generator();
         let g2 = G2::generator();
         let r = Fr::rand(&mut rng);
-        let xid = hash_to_fr(&identity);
+        let bid = hash_to_g1(&identity);
 
         USK {
             identity: identity.clone(),
             r: g2 * r,
-            k: g2 * (msk.alpha + r * xid),
+            k: g1 * msk.alpha + bid * r,
         }
     }
 
     pub fn encrypt(&self, mut rng: impl Rng, msg: &Gt, mpk: &MPK, identity: String) -> CT {
-        let g1 = G1::generator();
+        let g2 = G2::generator();
 
         let s = Fr::rand(&mut rng);
-        let xid = hash_to_fr(&identity);
+        let bid = hash_to_g1(&identity);
 
         CT {
             identity: identity.clone(),
             msg: mpk.a.pow(s.into_bigint()) * msg,
-            s: g1 * s,
-            c: g1 * (s * xid),
+            s: g2 * s,
+            c: bid * s,
         }
     }
 
@@ -79,7 +80,7 @@ impl BF {
             return None;
         }
 
-        let result = Bls12_381::pairing(ct.s, usk.k).0 * Bls12_381::pairing(-ct.c, usk.r).0;
+        let result = Bls12_381::pairing(usk.k, ct.s).0 * Bls12_381::pairing(-ct.c, usk.r).0;
         Some(ct.msg / result)
     }
 }
