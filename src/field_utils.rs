@@ -4,7 +4,7 @@ use ark_ff::{UniformRand, Zero};
 use ark_std::ops::Add;
 use rand::thread_rng;
 
-use crate::GroupCtx;
+use crate::f_functions::{scalar_mul_g1, scalar_mul_g2};
 use crate::{FieldElement, Matrix, Vector};
 
 pub fn random_field_element() -> FieldElement {
@@ -109,23 +109,23 @@ pub fn vector_zero<T: Zero + Copy>(len: usize) -> Vec<T> {
     vec![T::zero(); len]
 }
 
-pub fn vector_lift_g1(v: &Vector, group: &GroupCtx) -> Vec<G1> {
-    v.iter().map(|&e| group.scalar_mul_p1(e)).collect()
+pub fn vector_lift_g1(v: &Vector) -> Vec<G1> {
+    v.iter().map(|&e| scalar_mul_g1(e)).collect()
 }
 
-pub fn vector_lift_g2(v: &Vector, group: &GroupCtx) -> Vec<G2> {
-    v.iter().map(|&e| group.scalar_mul_p2(e)).collect()
+pub fn vector_lift_g2(v: &Vector) -> Vec<G2> {
+    v.iter().map(|&e| scalar_mul_g2(e)).collect()
 }
 
-pub fn matrix_lift_g1(m: &Matrix<FieldElement>, group: &GroupCtx) -> Matrix<G1> {
+pub fn matrix_lift_g1(m: &Matrix<FieldElement>) -> Matrix<G1> {
     m.iter()
-        .map(|row| row.iter().map(|&e| group.scalar_mul_p1(e)).collect())
+        .map(|row| row.iter().map(|&e| scalar_mul_g1(e)).collect())
         .collect()
 }
 
-pub fn matrix_lift_g2(m: &Matrix<FieldElement>, group: &GroupCtx) -> Matrix<G2> {
+pub fn matrix_lift_g2(m: &Matrix<FieldElement>) -> Matrix<G2> {
     m.iter()
-        .map(|row| row.iter().map(|&e| group.scalar_mul_p2(e)).collect())
+        .map(|row| row.iter().map(|&e| scalar_mul_g2(e)).collect())
         .collect()
 }
 

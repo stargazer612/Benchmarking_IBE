@@ -41,7 +41,7 @@ pub fn bench_affine_mac_verify(c: &mut Criterion) {
     let message = generate_random_message_128();
     let tag = mac.tag(&sk, &message);
 
-    c.bench_function("affine_mac_gen (128)", |b| {
+    c.bench_function("affine_mac_verify (128)", |b| {
         b.iter(|| mac.verify(bb(&sk), bb(&message), bb(&tag)))
     });
 }

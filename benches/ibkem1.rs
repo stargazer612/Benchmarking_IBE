@@ -40,7 +40,7 @@ pub fn bench_ibkem1_encrypt(c: &mut Criterion) {
     let (pk, _) = ibkem.setup();
     let (_, identity) = generate_email_and_hash_identity(128);
 
-    c.bench_function("ibkem1_decrypt (128)", |b| {
+    c.bench_function("ibkem1_encrypt (128)", |b| {
         b.iter(|| ibkem.encrypt(bb(&pk), bb(&identity)))
     });
 }
