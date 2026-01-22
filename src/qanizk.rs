@@ -1,4 +1,4 @@
-use crate::f_functions::*;
+use crate::group_functions::multi_pairing;
 use crate::field_utils::*;
 use crate::hashing::*;
 use crate::types::*;

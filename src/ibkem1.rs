@@ -1,5 +1,6 @@
 use crate::affine_mac::{AffineMAC, SecretKey as MACSecretKey};
-use crate::f_functions::*;
+use crate::f_functions::{f_i, f_prime_i};
+use crate::group_functions::multi_pairing;
 use crate::field_utils::*;
 use crate::types::*;
 

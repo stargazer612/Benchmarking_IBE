@@ -1,4 +1,5 @@
-use crate::f_functions::*;
+use crate::f_functions::{f_i, f_prime_i};
+use crate::group_functions::scalar_mul_g2;
 use crate::field_utils::*;
 use crate::types::*;
 

@@ -4,7 +4,7 @@ use ark_ff::{UniformRand, Zero};
 use ark_std::ops::Add;
 use rand::thread_rng;
 
-use crate::f_functions::{scalar_mul_g1, scalar_mul_g2};
+use crate::group_functions::{scalar_mul_g1, scalar_mul_g2};
 use crate::{FieldElement, Matrix, Vector};
 
 pub fn random_field_element() -> FieldElement {
