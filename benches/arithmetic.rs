@@ -4,35 +4,16 @@ use std::hint::black_box as bb;
 
 use ibe_schemes::*;
 
-pub fn bench_bls12_381(c: &mut Criterion) {
-    c.bench_function("bls12_381", |b| b.iter(|| GroupCtx::bls12_381()));
-}
-
-pub fn bench_scalar_mul_p1(c: &mut Criterion) {
-    let group = GroupCtx::bls12_381();
+pub fn bench_scalar_mul_g1(c: &mut Criterion) {
     let scalar = random_field_element();
 
-    c.bench_function("scalar_mul_p1", |b| {
-        b.iter(|| group.scalar_mul_p1(bb(scalar)))
-    });
+    c.bench_function("scalar_mul_g1", |b| b.iter(|| scalar_mul_g1(bb(scalar))));
 }
 
-pub fn bench_scalar_mul_p2(c: &mut Criterion) {
-    let group = GroupCtx::bls12_381();
+pub fn bench_scalar_mul_g2(c: &mut Criterion) {
     let scalar = random_field_element();
 
-    c.bench_function("scalar_mul_p2", |b| {
-        b.iter(|| group.scalar_mul_p2(bb(scalar)))
-    });
-}
-
-pub fn bench_scalar_expo_gt(c: &mut Criterion) {
-    let group = GroupCtx::bls12_381();
-    let scalar = random_field_element();
-
-    c.bench_function("scalar_expo_gt", |b| {
-        b.iter(|| group.scalar_expo_gt(bb(scalar)))
-    });
+    c.bench_function("scalar_mul_g2", |b| b.iter(|| scalar_mul_g2(bb(scalar))));
 }
 
 pub fn bench_pairing(c: &mut Criterion) {
@@ -42,7 +23,7 @@ pub fn bench_pairing(c: &mut Criterion) {
     let g1 = group.scalar_mul_p1(a);
     let g2 = group.scalar_mul_p2(b);
 
-    c.bench_function("pairing", |b| b.iter(|| group.pairing(bb(&g1), bb(&g2))));
+    c.bench_function("pairing", |b| b.iter(|| pairing(bb(&g1), bb(&g2))));
 }
 
 pub fn bench_multi_pairing(c: &mut Criterion) {
@@ -60,7 +41,7 @@ pub fn bench_multi_pairing(c: &mut Criterion) {
     }
 
     c.bench_function("multi_pairing (5)", |b| {
-        b.iter(|| group.multi_pairing(bb(&pairs)))
+        b.iter(|| multi_pairing(bb(&pairs)))
     });
 }
 
@@ -155,9 +136,8 @@ pub fn bench_matrix_transpose(c: &mut Criterion) {
 
 pub fn bench_group_matrix_vector_mul_msm(c: &mut Criterion) {
     let size = 20;
-    let group = GroupCtx::bls12_381();
     let m = random_matrix(size, size);
-    let m_g = matrix_lift_g1(&m, &group);
+    let m_g = matrix_lift_g1(&m);
     let v = random_vector(size);
 
     c.bench_function("group_matrix_vector_mul_msm (20)", |b| {
@@ -167,9 +147,8 @@ pub fn bench_group_matrix_vector_mul_msm(c: &mut Criterion) {
 
 pub fn bench_matrix_field_multiply(c: &mut Criterion) {
     let size = 20;
-    let group = GroupCtx::bls12_381();
     let m = random_matrix(size, size);
-    let m_g = matrix_lift_g1(&m, &group);
+    let m_g = matrix_lift_g1(&m);
     let n = random_matrix(size, size);
 
     c.bench_function("matrix_field_multiply (20)", |b| {
@@ -179,9 +158,8 @@ pub fn bench_matrix_field_multiply(c: &mut Criterion) {
 
 pub fn bench_g1_matrix_transpose(c: &mut Criterion) {
     let size = 20;
-    let group = GroupCtx::bls12_381();
     let m = random_matrix(size, size);
-    let m_g = matrix_lift_g1(&m, &group);
+    let m_g = matrix_lift_g1(&m);
 
     c.bench_function("g1_matrix_transpose", |b| {
         b.iter(|| matrix_transpose(bb(&m_g)))
@@ -190,9 +168,8 @@ pub fn bench_g1_matrix_transpose(c: &mut Criterion) {
 
 pub fn bench_g2_matrix_transpose(c: &mut Criterion) {
     let size = 20;
-    let group = GroupCtx::bls12_381();
     let m = random_matrix(size, size);
-    let m_g = matrix_lift_g2(&m, &group);
+    let m_g = matrix_lift_g2(&m);
 
     c.bench_function("g2_matrix_transpose", |b| {
         b.iter(|| matrix_transpose(bb(&m_g)))
@@ -236,10 +213,8 @@ pub fn bench_generate_email_and_hash_identity(c: &mut Criterion) {
 
 criterion_group!(
     benches,
-    bench_bls12_381,
-    bench_scalar_mul_p1,
-    bench_scalar_mul_p2,
-    bench_scalar_expo_gt,
+    bench_scalar_mul_g1,
+    bench_scalar_mul_g2,
     bench_pairing,
     bench_multi_pairing,
     bench_random_field_element,

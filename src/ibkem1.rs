@@ -1,10 +1,11 @@
 use crate::affine_mac::{AffineMAC, SecretKey as MACSecretKey};
-use crate::f_functions::*;
+use crate::f_functions::{f_i, f_prime_i};
+use crate::group_functions::multi_pairing;
 use crate::field_utils::*;
-use crate::group_ctx::*;
 use crate::types::*;
 
-use ark_bls12_381::{G1Projective as G1, G2Projective as G2};
+use ark_bls12_381::{G1Projective as G1, G2Affine, G2Projective as G2};
+use ark_ec::AffineRepr;
 use ark_ff::{One, Zero};
 
 pub struct IBKEM1PublicKey {
@@ -35,7 +36,6 @@ pub struct IBKEM1 {
     pub l: usize, // 2*len + 1
     pub l_prime: usize,
     pub mac: AffineMAC,
-    pub group: GroupCtx,
 }
 
 impl IBKEM1 {
@@ -45,7 +45,6 @@ impl IBKEM1 {
             l,
             l_prime,
             mac: AffineMAC::new(k, l, l_prime),
-            group: GroupCtx::bls12_381(),
         }
     }
 
@@ -83,14 +82,14 @@ impl IBKEM1 {
             z_prime_vectors.push(z_prime_i);
         }
 
-        let m_g1 = matrix_lift_g1(&m_matrix, &self.group);
+        let m_g1 = matrix_lift_g1(&m_matrix);
 
         let z_matrices_g1: Vec<Matrix<G1>> = z_matrices
             .iter()
-            .map(|matrix| matrix_lift_g1(&matrix, &self.group))
+            .map(|matrix| matrix_lift_g1(&matrix))
             .collect();
 
-        let z_prime_vectors_g1: Matrix<G1> = matrix_lift_g1(&z_prime_vectors, &self.group);
+        let z_prime_vectors_g1 = matrix_lift_g1(&z_prime_vectors);
 
         let pk = IBKEM1PublicKey {
             m_matrix: m_g1,
@@ -126,7 +125,7 @@ impl IBKEM1 {
             }
         }
 
-        let v_g2 = vector_lift_g2(&v_field, &self.group);
+        let v_g2 = vector_lift_g2(&v_field);
 
         IBKEM1UserSecretKey {
             t_g2: tag.t_g2,
@@ -157,14 +156,15 @@ impl IBKEM1 {
             let fi_prime = f_prime_i(i);
             if !fi_prime.is_zero() {
                 let zi_prime_dot_r = vector_dot_g1(&r, &pk.z_prime_vectors[i]);
-                pairing_pairs.push((zi_prime_dot_r, self.group.g2.clone()));
+                // pairing_pairs.push((zi_prime_dot_r, self.group.g2.clone()));
+                pairing_pairs.push((zi_prime_dot_r, G2Affine::generator().into()));
             }
         }
 
         let k_gt = if pairing_pairs.is_empty() {
             GTElement::one()
         } else {
-            self.group.multi_pairing(&pairing_pairs)
+            multi_pairing(&pairing_pairs)
         };
 
         let ciphertext = IBKEM1Ciphertext { c0_g1, c1_g1 };
@@ -190,6 +190,6 @@ impl IBKEM1 {
             .map(|i| (c1_g1[i].clone(), usk.t_g2[i].clone()))
             .collect();
 
-        self.group.multi_pairing(&first_term) / self.group.multi_pairing(&second_term)
+        multi_pairing(&first_term) / multi_pairing(&second_term)
     }
 }

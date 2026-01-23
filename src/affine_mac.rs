@@ -1,6 +1,6 @@
-use crate::f_functions::*;
+use crate::f_functions::{f_i, f_prime_i};
+use crate::group_functions::scalar_mul_g2;
 use crate::field_utils::*;
-use crate::group_ctx::*;
 use crate::types::*;
 
 use ark_bls12_381::G2Projective as G2;
@@ -22,17 +22,11 @@ pub struct AffineMAC {
     pub k: usize,
     pub l: usize,
     pub l_prime: usize,
-    pub group: GroupCtx,
 }
 
 impl AffineMAC {
     pub fn new(k: usize, l: usize, l_prime: usize) -> Self {
-        Self {
-            k,
-            l,
-            l_prime,
-            group: GroupCtx::bls12_381(),
-        }
+        Self { k, l, l_prime }
     }
 
     pub fn gen_mac(&self) -> SecretKey {
@@ -73,8 +67,8 @@ impl AffineMAC {
             }
         }
 
-        let t_g2: Vec<G2> = vector_lift_g2(&t_field, &self.group);
-        let u_g2: Vec<G2> = vector_lift_g2(&u_field, &self.group);
+        let t_g2: Vec<G2> = vector_lift_g2(&t_field);
+        let u_g2: Vec<G2> = vector_lift_g2(&u_field);
 
         Tag {
             t_g2,
@@ -109,7 +103,7 @@ impl AffineMAC {
                 assert_eq!(row_vec.len(), 2 * self.k);
                 for r in 0..(2 * self.k) {
                     if !row_vec[r].is_zero() {
-                        expected[r] += self.group.scalar_mul_p2(row_vec[r]);
+                        expected[r] += scalar_mul_g2(row_vec[r]);
                     }
                 }
             }
