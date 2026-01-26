@@ -1,4 +1,4 @@
-use ark_bls12_381::{G1Affine, G1Projective as G1, G2Projective as G2};
+use ark_bls12_381::{G1Affine, G1Projective as G1, G2Affine, G2Projective as G2};
 use ark_ec::{CurveGroup, VariableBaseMSM};
 use ark_ff::{UniformRand, Zero};
 use ark_std::ops::Add;
@@ -37,6 +37,10 @@ pub fn vector_add(a: &Vector, b: &Vector) -> Vector {
 }
 
 pub fn vector_add_g1(a: &Vec<G1>, b: &Vec<G1>) -> Vec<G1> {
+    a.iter().zip(b.iter()).map(|(x, y)| *x + *y).collect()
+}
+
+pub fn vector_add_g2(a: &Vec<G2>, b: &Vec<G2>) -> Vec<G2> {
     a.iter().zip(b.iter()).map(|(x, y)| *x + *y).collect()
 }
 
@@ -167,6 +171,15 @@ pub fn group_matrix_vector_mul_msm(matrix_g1: &Matrix<G1>, vector: &Vector) -> V
             let row_affine: Vec<G1Affine> = row.iter().map(|g| g.into_affine()).collect();
             G1::msm(&row_affine, &vector).unwrap()
         })
+        .collect()
+}
+
+pub fn matrix_vector_g2_mul_msm(matrix: &Matrix<FieldElement>, vector_g2: &Vec<G2>) -> Vec<G2> {
+    let vec_g2_affine: Vec<G2Affine> = vector_g2.iter().map(|g| g.into_affine()).collect();
+
+    matrix
+        .iter()
+        .map(|row| G2::msm(&vec_g2_affine, &row).unwrap())
         .collect()
 }
 

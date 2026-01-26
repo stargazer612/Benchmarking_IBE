@@ -1,4 +1,4 @@
-use ibe_schemes::*;
+use ibe_schemes::{AffineMAC, generate_random_message_128};
 
 #[test]
 fn affine_mac_small_ok() {
@@ -33,9 +33,10 @@ fn affine_mac_small_fail() {
 
 #[test]
 fn affine_mac_large_ok() {
-    let m_len = 128;
-    let l = 2 * m_len + 1;
-    let mac = AffineMAC::new(2, l, 0);
+    let k = 2;
+    let l = 128;
+    let l_prime = 0;
+    let mac = AffineMAC::new(k, l, l_prime);
     let sk = mac.gen_mac();
 
     let message = generate_random_message_128();
@@ -46,9 +47,10 @@ fn affine_mac_large_ok() {
 
 #[test]
 fn affine_mac_large_fail() {
-    let m_len = 128;
-    let l = 2 * m_len + 1;
-    let mac = AffineMAC::new(2, l, 0);
+    let k = 2;
+    let l = 128;
+    let l_prime = 0;
+    let mac = AffineMAC::new(k, l, l_prime);
     let sk = mac.gen_mac();
 
     let message = generate_random_message_128();
