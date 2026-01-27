@@ -1,8 +1,8 @@
+use crate::bit_utils::bit_at;
 use crate::field_utils::*;
 use crate::types::*;
 
 use ark_bls12_381::G2Projective as G2;
-use bit_vec::BitVec;
 
 pub struct SecretKey {
     pub b: Matrix<FieldElement>,
@@ -20,11 +20,6 @@ pub struct Tag {
 pub struct AffineMAC {
     pub k: usize,
     pub msg_len: usize,
-}
-
-fn bit_at(i: usize, m: &[u8]) -> usize {
-    let msg_bits = BitVec::from_bytes(m);
-    if msg_bits[i] { 1 } else { 0 }
 }
 
 impl AffineMAC {

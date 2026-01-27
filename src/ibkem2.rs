@@ -1,4 +1,5 @@
 use crate::affine_mac::{AffineMAC, SecretKey as MACSecretKey};
+use crate::bit_utils::bit_at;
 use crate::field_utils::*;
 use crate::group_functions::{multi_pairing, pairing};
 use crate::qanizk::{CRS, QANIZK, QANIZKProof as Proof};
@@ -7,8 +8,6 @@ use crate::types::*;
 use ark_bls12_381::{G1Projective as G1, G2Projective as G2};
 use ark_ec::{CurveGroup, PrimeGroup};
 use ark_ff::{BigInteger, PrimeField};
-
-use bit_vec::BitVec;
 
 pub struct IBKEM2PublicKey {
     pub m_matrix: Matrix<G1>,
@@ -41,11 +40,6 @@ pub struct IBKEM2 {
     pub msg_len: usize,
     pub mac: AffineMAC,
     pub qanizk: QANIZK,
-}
-
-fn bit_at(i: usize, m: &[u8]) -> usize {
-    let msg_bits = BitVec::from_bytes(m);
-    if msg_bits[i] { 1 } else { 0 }
 }
 
 impl IBKEM2 {
