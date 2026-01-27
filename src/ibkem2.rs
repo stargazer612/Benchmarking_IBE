@@ -1,6 +1,6 @@
 use crate::affine_mac::{AffineMAC, SecretKey as MACSecretKey};
-use crate::group_functions::{multi_pairing, pairing};
 use crate::field_utils::*;
+use crate::group_functions::{multi_pairing, pairing};
 use crate::qanizk::{CRS, QANIZK, QANIZKProof as Proof};
 use crate::types::*;
 
