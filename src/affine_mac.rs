@@ -15,7 +15,6 @@ pub struct SecretKey {
 pub struct Tag {
     pub t_g2: Vec<G2>,
     pub u_g2: Vec<G2>,
-    pub t_field: Vector,
 }
 
 pub struct AffineMAC {
@@ -67,11 +66,7 @@ impl AffineMAC {
         let t_g2: Vec<G2> = vector_lift_g2(&t_field);
         let u_g2: Vec<G2> = vector_lift_g2(&u_field);
 
-        Tag {
-            t_g2,
-            u_g2,
-            t_field,
-        }
+        Tag { t_g2, u_g2 }
     }
 
     pub fn verify(&self, sk: &SecretKey, message: &[u8], tag: &Tag) -> bool {
