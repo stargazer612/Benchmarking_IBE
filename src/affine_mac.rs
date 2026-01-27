@@ -20,8 +20,7 @@ pub struct Tag {
 
 pub struct AffineMAC {
     pub k: usize,
-    pub l: usize,
-    pub l_prime: usize,
+    pub msg_len: usize,
 }
 
 fn bit_at(i: usize, m: &[u8]) -> usize {
@@ -30,14 +29,15 @@ fn bit_at(i: usize, m: &[u8]) -> usize {
 }
 
 impl AffineMAC {
-    pub fn new(k: usize, l: usize, l_prime: usize) -> Self {
-        Self { k, l, l_prime }
+    pub fn new(k: usize, msg_len: usize) -> Self {
+        assert_eq!(msg_len % 8, 0);
+        Self { k, msg_len }
     }
 
     pub fn gen_mac(&self) -> SecretKey {
         let b = random_matrix(self.k, self.k);
-        let mut x_matrices = Vec::with_capacity(2 * self.l);
-        for _ in 0..2 * self.l {
+        let mut x_matrices = Vec::with_capacity(2 * self.msg_len);
+        for _ in 0..2 * self.msg_len {
             x_matrices.push(random_matrix(2 * self.k, self.k));
         }
         let x_prime = vec![random_vector(2 * self.k)];
@@ -49,11 +49,13 @@ impl AffineMAC {
     }
 
     pub fn tag(&self, sk: &SecretKey, message: &[u8]) -> Tag {
+        assert_eq!(message.len() * 8, self.msg_len);
+
         let s = random_vector(self.k);
         let t_field = matrix_vector_mul(&sk.b, &s);
 
         let mut x_m = matrix_zero(2 * self.k, self.k);
-        for i in 0..self.l {
+        for i in 0..self.msg_len {
             let b = bit_at(i, message);
             let x_i = &sk.x_matrices[2 * i + b];
             x_m = matrix_add(&x_m, x_i);
@@ -73,10 +75,11 @@ impl AffineMAC {
     }
 
     pub fn verify(&self, sk: &SecretKey, message: &[u8], tag: &Tag) -> bool {
+        assert_eq!(message.len() * 8, self.msg_len);
         assert_eq!(tag.u_g2.len(), 2 * self.k);
 
         let mut x_m = matrix_zero(2 * self.k, self.k);
-        for i in 0..self.l {
+        for i in 0..self.msg_len {
             let b = bit_at(i, message);
             let x_i = &sk.x_matrices[2 * i + b];
             x_m = matrix_add(&x_m, x_i);

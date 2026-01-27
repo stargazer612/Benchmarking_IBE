@@ -48,7 +48,7 @@ impl IBKEM2 {
             k,
             l,
             l_prime,
-            mac: AffineMAC::new(k, l, l_prime),
+            mac: AffineMAC::new(k, l),
             qanizk: QANIZK::new(k, lambda),
         }
     }
@@ -119,7 +119,7 @@ impl IBKEM2 {
         let mut v_field = vector_zero::<FieldElement>(self.k);
 
         for i in 0..=self.l {
-            let fi = f_i(i, self.mac.l, identity);
+            let fi = f_i(i, 2*self.mac.msg_len + 1, identity);
             if !fi.is_zero() {
                 let yi_t = matrix_vector_mul(&sk.y_matrices[i], &tag.t_field);
                 v_field = vector_add(&v_field, &yi_t);
@@ -150,7 +150,7 @@ impl IBKEM2 {
         let mut z_i_sum = matrix_zero::<G1>(n, self.k);
 
         for i in 0..=self.l {
-            let fi = f_i(i, self.mac.l, identity);
+            let fi = f_i(i, 2*self.mac.msg_len + 1, identity);
             if !fi.is_zero() {
                 z_i_sum = matrix_add(&z_i_sum, &pk.z_matrices[i]);
             }
