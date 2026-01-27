@@ -1,15 +1,16 @@
 use crate::affine_mac::{AffineMAC, SecretKey as MACSecretKey};
-use crate::f_functions::{f_i, f_prime_i};
-use crate::group_functions::multi_pairing;
+use crate::group_functions::{multi_pairing, pairing};
 use crate::field_utils::*;
 use crate::types::*;
 
-use ark_bls12_381::{G1Projective as G1, G2Affine, G2Projective as G2};
-use ark_ec::AffineRepr;
-use ark_ff::{One, Zero};
+use ark_bls12_381::{G1Projective as G1, G2Projective as G2};
+use ark_ec::PrimeGroup;
+
+use bit_vec::BitVec;
 
 pub struct IBKEM1PublicKey {
     pub m_matrix: Matrix<G1>,
+    // z_matrices = [z_{0,0}, z_{0,1}, z_{1,0}, z_{1,1}, ..., z_{l-1,0}, z_{l-1,1}]
     pub z_matrices: Vec<Matrix<G1>>,
     pub z_prime_vectors: Matrix<G1>,
 }
@@ -33,32 +34,37 @@ pub struct IBKEM1Ciphertext {
 
 pub struct IBKEM1 {
     pub k: usize,
-    pub l: usize, // 2*len + 1
-    pub l_prime: usize,
+    pub msg_len: usize,
     pub mac: AffineMAC,
 }
 
+fn bit_at(i: usize, m: &[u8]) -> usize {
+    let msg_bits = BitVec::from_bytes(m);
+    if msg_bits[i] { 1 } else { 0 }
+}
+
 impl IBKEM1 {
-    pub fn new(k: usize, l: usize, l_prime: usize) -> Self {
+    pub fn new(k: usize, msg_len: usize) -> Self {
         Self {
             k,
-            l,
-            l_prime,
-            mac: AffineMAC::new(k, l),
+            msg_len,
+            mac: AffineMAC::new(k, msg_len),
         }
     }
 
     pub fn setup(&self) -> (IBKEM1PublicKey, IBKEM1SecretKey) {
+        // How is this eta chosen?
         let eta = 2 * self.k;
         let m_matrix = random_matrix(self.k + eta, self.k);
         let mac_sk = self.mac.gen_mac();
 
-        assert_eq!(mac_sk.x_matrices.len(), self.l + 1);
+        let l = mac_sk.x_matrices.len();
 
-        let mut y_matrices = Vec::with_capacity(self.l);
-        let mut z_matrices = Vec::with_capacity(self.l);
+        let mut y_matrices = Vec::with_capacity(l);
+        let mut z_matrices = Vec::with_capacity(l);
 
-        for i in 0..=self.l {
+        for i in 0..l {
+            // Why do we use (k x k) instead of (k x n) as in transformation?
             let y_i = random_matrix(self.k, self.k);
             let y_i_transposed = matrix_transpose(&y_i);
             let x_i_transposed = matrix_transpose(&mac_sk.x_matrices[i]);
@@ -69,10 +75,12 @@ impl IBKEM1 {
             z_matrices.push(z_i);
         }
 
-        let mut y_prime_vectors = Vec::with_capacity(self.l_prime);
-        let mut z_prime_vectors = Vec::with_capacity(self.l_prime);
+        // specialized to l_prime = 0 based on the MAC we use
+        let l_prime = 0;
+        let mut y_prime_vectors = Vec::with_capacity(l_prime + 1);
+        let mut z_prime_vectors = Vec::with_capacity(l_prime + 1);
 
-        for i in 0..=self.l_prime {
+        for i in 0..=l_prime {
             let y_prime_i = random_vector(self.k);
             let combined = vector_concat(&y_prime_i, &mac_sk.x_prime[i]);
             let m_matrix_transposed = matrix_transpose(&m_matrix);
@@ -107,25 +115,23 @@ impl IBKEM1 {
     }
 
     pub fn extract(&self, sk: &IBKEM1SecretKey, identity: &[u8]) -> IBKEM1UserSecretKey {
+        assert_eq!(identity.len() * 8, self.msg_len);
+
         let tag = self.mac.tag(&sk.mac_sk, identity);
-        let mut v_field = vector_zero::<FieldElement>(self.k);
 
-        for i in 0..=self.l {
-            let fi = f_i(i, 2*self.mac.msg_len + 1, identity);
-            if !fi.is_zero() {
-                let yi_t = matrix_vector_mul(&sk.y_matrices[i], &tag.t_field);
-                v_field = vector_add(&v_field, &&yi_t);
-            }
+        // f_i(m) is specialized to the MAC we use
+        let mut v_g2 = vector_zero::<G2>(self.k);
+        for i in 0..self.msg_len {
+            let b = bit_at(i, identity);
+            let y_i = &sk.y_matrices[2 * i + b];
+
+            let y_i_g2 = matrix_vector_g2_mul_msm(&y_i, &tag.t_g2);
+            v_g2 = vector_add_g2(&v_g2, &y_i_g2);
         }
 
-        for i in 0..=self.l_prime {
-            let fi_prime = f_prime_i(i);
-            if !fi_prime.is_zero() {
-                v_field = vector_add(&v_field, &sk.y_prime_vectors[i]);
-            }
-        }
-
-        let v_g2 = vector_lift_g2(&v_field);
+        // Specialized to l_prime = 0 and f'_0(m) = 1 based on the MAC we use
+        let y_prime = vector_lift_g2(&sk.y_prime_vectors[0]);
+        v_g2 = vector_add_g2(&v_g2, &y_prime);
 
         IBKEM1UserSecretKey {
             t_g2: tag.t_g2,
@@ -135,37 +141,27 @@ impl IBKEM1 {
     }
 
     pub fn encrypt(&self, pk: &IBKEM1PublicKey, identity: &[u8]) -> (IBKEM1Ciphertext, GTElement) {
+        assert_eq!(identity.len() * 8, self.msg_len);
+
         let r = random_vector(self.k);
         let c0_g1 = group_matrix_vector_mul_msm(&pk.m_matrix, &r);
 
         let n = pk.z_matrices[0].len();
         let mut z_i_sum = matrix_zero::<G1>(n, self.k);
 
-        for i in 0..=self.l {
-            let fi = f_i(i, 2*self.mac.msg_len + 1, identity);
-            if !fi.is_zero() {
-                z_i_sum = matrix_add(&z_i_sum, &pk.z_matrices[i]);
-            }
+        // f_i(m) is specialized to the MAC we use here
+        for i in 0..self.msg_len {
+            let b = bit_at(i, identity);
+            let z_i = &pk.z_matrices[2 * i + b];
+            z_i_sum = matrix_add(&z_i_sum, &z_i);
         }
-
         let c1_g1 = group_matrix_vector_mul_msm(&z_i_sum, &r);
 
-        let mut pairing_pairs = Vec::with_capacity(self.l_prime);
+        // Specialized to l_prime = 0 and f'_0(m) = 1 based on the MAC we use
+        let z_prime = &pk.z_prime_vectors[0];
+        let k_g1 = vector_dot_g1(&r, &z_prime);
 
-        for i in 0..=self.l_prime {
-            let fi_prime = f_prime_i(i);
-            if !fi_prime.is_zero() {
-                let zi_prime_dot_r = vector_dot_g1(&r, &pk.z_prime_vectors[i]);
-                // pairing_pairs.push((zi_prime_dot_r, self.group.g2.clone()));
-                pairing_pairs.push((zi_prime_dot_r, G2Affine::generator().into()));
-            }
-        }
-
-        let k_gt = if pairing_pairs.is_empty() {
-            GTElement::one()
-        } else {
-            multi_pairing(&pairing_pairs)
-        };
+        let k_gt = pairing(&k_g1, &G2::generator());
 
         let ciphertext = IBKEM1Ciphertext { c0_g1, c1_g1 };
         (ciphertext, k_gt)
