@@ -5,26 +5,26 @@ use std::hint::black_box as bb;
 use ibe_schemes::*;
 
 pub fn bench_ibkem1_new(c: &mut Criterion) {
-    let m_len = 128;
-    let l = 2 * m_len + 1;
+    let k = 2;
+    let msg_len = 128;
 
     c.bench_function("ibkem1_new (128)", |b| {
-        b.iter(|| IBKEM1::new(bb(2), bb(l), bb(0)))
+        b.iter(|| IBKEM1::new(bb(k), bb(msg_len)))
     });
 }
 
 pub fn bench_ibkem1_setup(c: &mut Criterion) {
-    let m_len = 128;
-    let l = 2 * m_len + 1;
-    let ibkem = IBKEM1::new(2, l, 0);
+    let k = 2;
+    let msg_len = 128;
+    let ibkem = IBKEM1::new(k, msg_len);
 
     c.bench_function("ibkem1_setup (128)", |b| b.iter(|| ibkem.setup()));
 }
 
 pub fn bench_ibkem1_extract(c: &mut Criterion) {
-    let m_len = 128;
-    let l = 2 * m_len + 1;
-    let ibkem = IBKEM1::new(2, l, 0);
+    let k = 2;
+    let msg_len = 128;
+    let ibkem = IBKEM1::new(k, msg_len);
     let (_, sk) = ibkem.setup();
     let (_, identity) = generate_email_and_hash_identity(128);
 
@@ -34,9 +34,9 @@ pub fn bench_ibkem1_extract(c: &mut Criterion) {
 }
 
 pub fn bench_ibkem1_encrypt(c: &mut Criterion) {
-    let m_len = 128;
-    let l = 2 * m_len + 1;
-    let ibkem = IBKEM1::new(2, l, 0);
+    let k = 2;
+    let msg_len = 128;
+    let ibkem = IBKEM1::new(k, msg_len);
     let (pk, _) = ibkem.setup();
     let (_, identity) = generate_email_and_hash_identity(128);
 
@@ -46,9 +46,9 @@ pub fn bench_ibkem1_encrypt(c: &mut Criterion) {
 }
 
 pub fn bench_ibkem1_decrypt(c: &mut Criterion) {
-    let m_len = 128;
-    let l = 2 * m_len + 1;
-    let ibkem = IBKEM1::new(2, l, 0);
+    let k = 2;
+    let msg_len = 128;
+    let ibkem = IBKEM1::new(k, msg_len);
     let (pk, sk) = ibkem.setup();
     let (_, identity) = generate_email_and_hash_identity(128);
     let usk = ibkem.extract(&sk, &identity);
