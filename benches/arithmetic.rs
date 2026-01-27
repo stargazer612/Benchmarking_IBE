@@ -17,25 +17,22 @@ pub fn bench_scalar_mul_g2(c: &mut Criterion) {
 }
 
 pub fn bench_pairing(c: &mut Criterion) {
-    let group = GroupCtx::bls12_381();
     let a = random_field_element();
     let b = random_field_element();
-    let g1 = group.scalar_mul_p1(a);
-    let g2 = group.scalar_mul_p2(b);
+    let g1 = scalar_mul_g1(a);
+    let g2 = scalar_mul_g2(b);
 
     c.bench_function("pairing", |b| b.iter(|| pairing(bb(&g1), bb(&g2))));
 }
 
 pub fn bench_multi_pairing(c: &mut Criterion) {
-    let group = GroupCtx::bls12_381();
-
     let length = 5;
     let mut pairs = Vec::with_capacity(length);
     for _ in 0..length {
         let a = random_field_element();
         let b = random_field_element();
-        let g1 = group.scalar_mul_p1(a);
-        let g2 = group.scalar_mul_p2(b);
+        let g1 = scalar_mul_g1(a);
+        let g2 = scalar_mul_g2(b);
 
         pairs.push((g1, g2));
     }
