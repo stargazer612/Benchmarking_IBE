@@ -53,7 +53,7 @@ impl IBKEM2 {
     }
 
     pub fn setup(&self) -> (IBKEM2PublicKey, IBKEM2SecretKey) {
-        // How is this eta chosen?
+        // we fix eta = 2k s.t. matrix formats for (y^T || x^T) * M
         let eta = 2 * self.k;
         let m_matrix = random_matrix(self.k + eta, self.k);
         let mac_sk = self.mac.gen_mac();
@@ -64,7 +64,7 @@ impl IBKEM2 {
         let mut z_matrices = Vec::with_capacity(l);
 
         for i in 0..l {
-            // Why do we use (k x k) instead of (k x n) as in transformation?
+            // we use (k x k) instead of (k x n) to ensure format of y_i and x_i matches for concat
             let y_i = random_matrix(self.k, self.k);
             let y_i_transposed = matrix_transpose(&y_i);
             let x_i_transposed = matrix_transpose(&mac_sk.x_matrices[i]);
