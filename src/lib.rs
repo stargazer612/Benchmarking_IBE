@@ -1,11 +1,10 @@
 pub mod affine_mac;
 pub mod bb;
 pub mod bf;
+pub mod bit_utils;
 pub mod blake3;
-pub mod f_functions;
-pub mod group_functions;
 pub mod field_utils;
-pub mod group_ctx;
+pub mod group_functions;
 pub mod hashing;
 pub mod ibkem1;
 pub mod ibkem2;
@@ -14,11 +13,10 @@ pub mod qanizk;
 pub mod types;
 
 pub use affine_mac::*;
+pub use bit_utils::*;
 pub use blake3::*;
-pub use f_functions::*;
-pub use group_functions::*;
 pub use field_utils::*;
-pub use group_ctx::*;
+pub use group_functions::*;
 pub use hashing::*;
 pub use ibkem1::*;
 pub use ibkem2::*;

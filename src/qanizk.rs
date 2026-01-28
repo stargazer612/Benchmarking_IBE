@@ -1,5 +1,5 @@
-use crate::group_functions::multi_pairing;
 use crate::field_utils::*;
+use crate::group_functions::multi_pairing;
 use crate::hashing::*;
 use crate::types::*;
 

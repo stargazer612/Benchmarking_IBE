@@ -2,9 +2,9 @@ use ibe_schemes::*;
 
 #[test]
 fn test_ibkem1_ok() {
-    let m_len = 128;
-    let l = 2 * m_len + 1;
-    let ibkem = IBKEM1::new(2, l, 0);
+    let k = 2;
+    let msg_len = 128;
+    let ibkem = IBKEM1::new(k, msg_len);
     let (pk, sk) = ibkem.setup();
 
     let (_, identity) = generate_email_and_hash_identity(128);
@@ -18,9 +18,9 @@ fn test_ibkem1_ok() {
 
 #[test]
 fn test_ibkem1_fail() {
-    let m_len = 128;
-    let l = 2 * m_len + 1;
-    let ibkem = IBKEM1::new(2, l, 0);
+    let k = 2;
+    let msg_len = 128;
+    let ibkem = IBKEM1::new(k, msg_len);
     let (pk, sk) = ibkem.setup();
 
     let (_, identity) = generate_email_and_hash_identity(128);
