@@ -209,3 +209,43 @@ pub fn g1_matrix_field_multiply(
 
     result
 }
+
+////Joint operations
+// Computes A^T * v 
+pub fn matrix_transpose_vector_mul(matrix: &Matrix<FieldElement>, vector: &Vector) -> Vector {
+    assert!(!matrix.is_empty());
+    let rows = matrix.len();
+    let cols = matrix[0].len();
+    assert_eq!(rows, vector.len());
+    
+    let mut result = vec![FieldElement::zero(); cols];
+    for j in 0..cols {
+        for i in 0..rows {
+            result[j] += matrix[i][j] * vector[i];
+        }
+    }
+    result
+}
+
+// Computes (A || B) * C 
+pub fn matrix_concat_multiply(a: &Matrix<FieldElement>, b: &Matrix<FieldElement>, c: &Matrix<FieldElement>) -> Matrix<FieldElement> {
+    assert_eq!(a.len(), b.len());
+    let rows = a.len();
+    let cols_a = a[0].len();
+    let cols_b = b[0].len();
+    let cols_c = c[0].len();
+    assert_eq!(cols_a + cols_b, c.len());
+    
+    let mut result = matrix_zero::<FieldElement>(rows, cols_c);
+    for i in 0..rows {
+        for j in 0..cols_c {
+            for k in 0..cols_a {
+                result[i][j] += a[i][k] * c[k][j];
+            }
+            for k in 0..cols_b {
+                result[i][j] += b[i][k] * c[cols_a + k][j];
+            }
+        }
+    }
+    result
+}
