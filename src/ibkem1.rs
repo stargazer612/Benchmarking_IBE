@@ -114,18 +114,20 @@ impl IBKEM1 {
         let tag = self.mac.tag(&sk.mac_sk, identity);
 
         // f_i(m) is specialized to the MAC we use
-        let mut v_g2 = vector_zero::<G2>(self.k);
+        let mut v_field = vector_zero::<FieldElement>(self.k);
         for i in 0..self.msg_len {
             let b = bit_at(i, identity);
             let y_i = &sk.y_matrices[2 * i + b];
 
-            let y_i_g2 = matrix_vector_g2_mul_msm(&y_i, &tag.t_g2);
-            v_g2 = vector_add_g2(&v_g2, &y_i_g2);
+            let y_i_t = matrix_vector_mul(&y_i, &tag.t_field);
+            v_field = vector_add(&v_field, &y_i_t);
         }
 
         // Specialized to l_prime = 0 and f'_0(m) = 1 based on the MAC we use
-        let y_prime = vector_lift_g2(&sk.y_prime_vectors[0]);
-        v_g2 = vector_add_g2(&v_g2, &y_prime);
+        let y_prime = &sk.y_prime_vectors[0];
+        v_field = vector_add(&v_field, &y_prime);
+
+        let v_g2 = vector_lift_g2(&v_field);
 
         IBKEM1UserSecretKey {
             t_g2: tag.t_g2,
