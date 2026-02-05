@@ -43,12 +43,14 @@ impl QANIZK {
         let k_matrix = random_matrix(m1_matrix.len(), self.k + 1);
 
         let a_g2: Matrix<G2> = matrix_lift_g2(&a_matrix);
-        let ka_matrix = matrix_multiply(&k_matrix, &a_matrix);
-        let ka_g2: Matrix<G2> = matrix_lift_g2(&ka_matrix);
+        // let ka_matrix = matrix_multiply(&k_matrix, &a_matrix);
+        // let ka_g2: Matrix<G2> = matrix_lift_g2(&ka_matrix);
+        let ka_g2 = matrix_multiply_lift_g2(&k_matrix, &a_matrix);
         let b_g1: Matrix<G1> = matrix_lift_g1(&b_matrix);
 
-        let m_transpose_matrix = matrix_transpose(&m1_matrix);
-        let mk_g1 = g1_matrix_field_multiply(&m_transpose_matrix, &k_matrix);
+        // let m_transpose_matrix = matrix_transpose(&m1_matrix);
+        // let mk_g1 = g1_matrix_field_multiply(&m_transpose_matrix, &k_matrix);
+        let mk_g1 = g1_matrix_transpose_multiply(&m1_matrix,&k_matrix);
 
         let mut kjb_a_g2 = Vec::with_capacity(self.lambda);
         let mut b_kjb_g1 = Vec::with_capacity(self.lambda);
@@ -59,13 +61,15 @@ impl QANIZK {
 
             for _ in 0..2 {
                 let kjb_matrix = random_matrix(self.k, self.k + 1);
-                let kjb_a = matrix_multiply(&kjb_matrix, &a_matrix);
-                let kjb_row_a_g2: Matrix<G2> = matrix_lift_g2(&kjb_a);
+                // let kjb_a = matrix_multiply(&kjb_matrix, &a_matrix);
+                // let kjb_row_a_g2: Matrix<G2> = matrix_lift_g2(&kjb_a);
+                let kjb_row_a_g2 = matrix_multiply_lift_g2(&kjb_matrix, &a_matrix);
                 kjb_row_a.push(kjb_row_a_g2);
 
-                let b_transpose = matrix_transpose(&b_matrix);
-                let b_kjb = matrix_multiply(&b_transpose, &kjb_matrix);
-                let b_kjb_row_g1: Matrix<G1> = matrix_lift_g1(&b_kjb);
+                // let b_transpose = matrix_transpose(&b_matrix);
+                // let b_kjb = matrix_multiply(&b_transpose, &kjb_matrix);
+                // let b_kjb_row_g1: Matrix<G1> = matrix_lift_g1(&b_kjb);
+                let b_kjb_row_g1 = matrix_transpose_multiply_lift_g1(&b_matrix, &kjb_matrix);
                 b_kjb_row.push(b_kjb_row_g1);
             }
 
@@ -141,8 +145,9 @@ impl QANIZK {
         let hash_input = self.hash_tag_c0_t1(tag, c0_g1, &t1_g1);
         let tau = blake3_hash_to_bits(&hash_input, self.lambda);
 
-        let mk_g1_transpose = matrix_transpose(&crs.mk_g1);
-        let r_mk = group_matrix_vector_mul_msm(&mk_g1_transpose, &r);
+        // let mk_g1_transpose = matrix_transpose(&crs.mk_g1);
+        // let r_mk = group_matrix_vector_mul_msm(&mk_g1_transpose, &r);
+        let r_mk = group_matrix_transpose_vector_mul_msm(&crs.mk_g1, &r);
         let s_b_k_tau = self.compute_s_times_b_k_tau(&s, &crs.b_kjb_g1, &tau);
 
         let u1_g1 = vector_add_g1(&r_mk, &s_b_k_tau);

@@ -249,3 +249,92 @@ pub fn matrix_concat_multiply(a: &Matrix<FieldElement>, b: &Matrix<FieldElement>
     }
     result
 }
+
+pub fn group_matrix_transpose_vector_mul_msm(matrix_g1: &Matrix<G1>, vector: &Vector) -> Vec<G1> {
+    assert!(!matrix_g1.is_empty());
+    assert!(!matrix_g1[0].is_empty());
+    let rows = matrix_g1.len();
+    let cols = matrix_g1[0].len();
+    assert_eq!(rows, vector.len(), "Matrix rows must equal vector length");
+    
+    let mut result = Vec::with_capacity(cols);
+    
+    for j in 0..cols {
+        let mut bases = Vec::with_capacity(rows);
+        let mut scalars = Vec::with_capacity(rows);
+        
+        for i in 0..rows {
+            bases.push(matrix_g1[i][j]);
+            scalars.push(vector[i]);
+        }
+        
+        let bases_affine: Vec<G1Affine> = bases.iter()
+            .map(|g| g.into_affine())
+            .collect();
+        
+        result.push(G1::msm(&bases_affine, &scalars).unwrap());
+    }
+    
+    result
+}
+
+pub fn matrix_multiply_lift_g2(left: &Matrix<FieldElement>, right: &Matrix<FieldElement>) -> Matrix<G2> {
+    let rows_left = left.len();
+    let cols_left = left[0].len();
+    let cols_right = right[0].len();
+    assert_eq!(cols_left, right.len(), "Matrix dimensions must match for multiplication");
+
+    let mut result = matrix_zero::<G2>(rows_left, cols_right);
+    
+    for i in 0..rows_left {
+        for j in 0..cols_right {
+            let mut sum = FieldElement::zero();
+            for k in 0..cols_left {
+                sum += left[i][k] * right[k][j];
+            }
+            result[i][j] = scalar_mul_g2(sum);
+        }
+    }
+    
+    result
+}
+
+pub fn matrix_transpose_multiply_lift_g1(left: &Matrix<FieldElement>, right: &Matrix<FieldElement>) -> Matrix<G1> {
+    let rows_left = left.len();
+    let rows_result = left[0].len();  
+    let cols_result = right[0].len();
+    
+    assert_eq!(rows_left, right.len(), "Transposed left columns must match right rows");
+    let mut result = matrix_zero::<G1>(rows_result, cols_result);
+    
+    for i in 0..rows_result {
+        for j in 0..cols_result {
+            let mut sum = FieldElement::zero();
+            for k in 0..rows_left {
+                sum += left[k][i] * right[k][j];
+            }
+            result[i][j] = scalar_mul_g1(sum);
+        }
+    }    
+    result
+}
+
+pub fn g1_matrix_transpose_multiply(left_g1: &Matrix<G1>, right_field: &Matrix<FieldElement>) -> Matrix<G1> {
+    let rows_left = left_g1.len();
+    let rows_result = left_g1[0].len();
+    let cols_result = right_field[0].len();
+    
+    assert_eq!(left_g1.len(), right_field.len(), "Transposed left columns must match right rows");
+    let mut result = matrix_zero::<G1>(rows_result, cols_result);
+    
+    for i in 0..rows_result {
+        for j in 0..cols_result {
+            let mut sum = G1::zero();
+            for k in 0..rows_left {
+                sum += left_g1[k][i] * right_field[k][j];
+            }
+            result[i][j] = sum;
+        }
+    }
+    result
+}
