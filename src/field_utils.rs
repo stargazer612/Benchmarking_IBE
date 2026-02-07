@@ -183,10 +183,7 @@ pub fn matrix_vector_g2_mul_msm(matrix: &Matrix<FieldElement>, vector_g2: &Vec<G
         .collect()
 }
 
-pub fn g1_matrix_field_multiply(
-    left_g1: &Matrix<G1>,
-    right_field: &Matrix<FieldElement>,
-) -> Matrix<G1> {
+pub fn g1_matrix_field_multiply(left_g1: &Matrix<G1>, right_field: &Matrix<FieldElement>) -> Matrix<G1> {
     let rows_left = left_g1.len();
     let cols_left = left_g1[0].len();
     let rows_right = right_field.len();
@@ -210,8 +207,6 @@ pub fn g1_matrix_field_multiply(
     result
 }
 
-////Joint operations
-// Computes A^T * v 
 pub fn matrix_transpose_vector_mul(matrix: &Matrix<FieldElement>, vector: &Vector) -> Vector {
     assert!(!matrix.is_empty());
     let rows = matrix.len();
@@ -227,7 +222,6 @@ pub fn matrix_transpose_vector_mul(matrix: &Matrix<FieldElement>, vector: &Vecto
     result
 }
 
-// Computes (A || B) * C 
 pub fn matrix_concat_multiply(a: &Matrix<FieldElement>, b: &Matrix<FieldElement>, c: &Matrix<FieldElement>) -> Matrix<FieldElement> {
     assert_eq!(a.len(), b.len());
     let rows = a.len();
