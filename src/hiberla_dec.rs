@@ -1,0 +1,165 @@
+use ark_bls12_381::{Bls12_381, Fq12 as Gt, Fr, G1Affine, G1Projective as G1, G2Projective as G2};
+use ark_ec::pairing::Pairing;
+use ark_ec::{PrimeGroup, VariableBaseMSM};
+use ark_ff::{Field, PrimeField, UniformRand};
+use ark_std::rand::Rng;
+
+use crate::{hash_to_fr, hash_to_g1};
+
+pub struct MSK {
+    pub alpha: Fr,
+}
+
+pub struct MPK {
+    pub a: Gt,
+}
+
+pub struct USK {
+    pub identity: Vec<String>,
+    pub k_1: G1,
+    pub k_2_0: Vec<G1>,
+    pub k_2_1: Vec<G1>,
+    pub k_check: Vec<G2>,
+}
+
+pub struct CT {
+    pub identity: Vec<String>,
+    pub msg: Gt,
+    pub c: G2,
+    pub c_i: Vec<G1>,
+}
+
+pub struct HiberlaDec {
+    pub l: usize, // partition size
+}
+
+impl HiberlaDec {
+    pub fn new(l: usize) -> HiberlaDec {
+        Self { l }
+    }
+
+    pub fn setup(&self, mut rng: impl Rng) -> (MSK, MPK) {
+        let alpha = Fr::rand(&mut rng);
+        let msk = MSK { alpha };
+
+        let g1 = G1::generator();
+        let g2 = G2::generator();
+
+        let mpk = MPK {
+            a: Bls12_381::pairing(g1 * alpha, g2).0,
+        };
+        (msk, mpk)
+    }
+
+    pub fn keygen(&self, mut rng: impl Rng, msk: &MSK, identity: Vec<String>) -> USK {
+        let n_k = identity.len();
+        assert!(n_k > 0);
+
+        let m_k = ceil_div(n_k, self.l);
+        let rs = sample_fr(&mut rng, m_k);
+
+        let mut k_1 = G1::generator() * msk.alpha;
+        for i in 0..n_k {
+            let r = rs[self.iota(i)];
+            let xid = hash_to_fr(&identity[i]);
+            let b_i_0 = hash_common_var(i, 0);
+            let b_i_1 = hash_common_var(i, 1);
+            let tmp: G1 = VariableBaseMSM::msm(&[b_i_0, b_i_1], &[r, r * xid]).unwrap();
+            k_1 += tmp;
+        }
+
+        let cap = self.l * m_k - n_k;
+        let mut k_2_0 = Vec::with_capacity(cap);
+        let mut k_2_1 = Vec::with_capacity(cap);
+        let r = rs[m_k - 1];
+        let mut i = n_k;
+        for _ in 0..cap {
+            let b_i_0 = hash_common_var(i, 0);
+            let b_i_1 = hash_common_var(i, 1);
+            k_2_0.push(b_i_0 * r);
+            k_2_1.push(b_i_1 * r);
+            i += 1;
+        }
+
+        let k_check = rs.iter().map(|r| G2::generator() * r).collect();
+
+        USK {
+            identity: identity.clone(),
+            k_1,
+            k_2_0,
+            k_2_1,
+            k_check,
+        }
+    }
+
+    pub fn encrypt(&self, mut rng: impl Rng, msg: &Gt, mpk: &MPK, identity: Vec<String>) -> CT {
+        let n_c = identity.len();
+        assert!(n_c > 0);
+
+        let s = Fr::rand(&mut rng);
+
+        let mut c_i = Vec::with_capacity(n_c);
+        for i in 0..n_c {
+            let xid = hash_to_fr(&identity[i]);
+            let b_i_0 = hash_common_var(i, 0);
+            let b_i_1 = hash_common_var(i, 1);
+            let tmp: G1 = VariableBaseMSM::msm(&[b_i_0, b_i_1], &[s, s * xid]).unwrap();
+            c_i.push(tmp);
+        }
+
+        CT {
+            identity: identity.clone(),
+            msg: mpk.a.pow(s.into_bigint()) * msg,
+            c: G2::generator() * s,
+            c_i,
+        }
+    }
+
+    pub fn decrypt(&self, usk: &USK, ct: &CT) -> Option<Gt> {
+        let n_k = usk.identity.len();
+        assert!(n_k > 0);
+
+        if !can_decrypt(&usk.identity, &ct.identity) {
+            return None;
+        }
+
+        let mut result = Bls12_381::pairing(usk.k_1, ct.c).0;
+        for i in 0..n_k {
+            // TODO: make use of multi-pairings here, since r (in k_check) is the same for multiple i
+            result *= Bls12_381::pairing(-ct.c_i[i], usk.k_check[self.iota(i)]).0;
+        }
+
+        Some(ct.msg / result)
+    }
+
+    fn iota(&self, i: usize) -> usize {
+        i / self.l
+    }
+}
+
+fn sample_fr(mut rng: impl Rng, n: usize) -> Vec<Fr> {
+    let mut result = Vec::with_capacity(n);
+    for _ in 0..n {
+        result.push(Fr::rand(&mut rng));
+    }
+    result
+}
+
+fn ceil_div(x: usize, y: usize) -> usize {
+    (x + y - 1) / y
+}
+
+fn hash_common_var(i: usize, j: usize) -> G1Affine {
+    const DOMAIN_SEP: &str = "$";
+    let mut hash_arg = String::new();
+    hash_arg += &j.to_string();
+    hash_arg += &DOMAIN_SEP;
+    hash_arg += &i.to_string();
+    hash_to_g1(&hash_arg)
+}
+
+fn can_decrypt(key: &Vec<String>, ct: &Vec<String>) -> bool {
+    let not_longer = key.len() <= ct.len();
+    let prefix_matches = key.iter().zip(ct.iter()).all(|(x, y)| x == y);
+    not_longer && prefix_matches
+}
