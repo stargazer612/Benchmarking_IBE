@@ -26,6 +26,16 @@ fn run_scheme(
 
     let user_identity = parse_identity(user_identity);
     let usk = scheme.keygen(&mut rng, &msk, user_identity.clone());
+    let usk = match identity_extension {
+        None => usk,
+        Some(id) => scheme.delegate(
+            &mut rng,
+            &mpk,
+            &usk,
+            user_identity.clone(),
+            String::from(id),
+        ),
+    };
 
     let dec = scheme.decrypt(&usk, &ct);
     return (k, dec);
@@ -134,4 +144,39 @@ fn hiberla_inferior_minimal_partition_fail() {
 #[test]
 fn hiberla_inferior_large_parition_fail() {
     test_decrypt_fail(6, "A.B.C.D", "A.B.C", None);
+}
+
+#[test]
+fn hiberla_delegate_single_partition_space_left_ok() {
+    test_decrypt_ok(6, "A.B.C", "A.B.C.D", Some("D"));
+}
+
+#[test]
+fn hiberla_delegate_single_partition_fully_filled_ok() {
+    test_decrypt_ok(4, "A.B.C", "A.B.C.D", Some("D"));
+}
+
+#[test]
+fn hiberla_delegate_multi_partition_space_left_ok() {
+    test_decrypt_ok(3, "A.B.C.D", "A.B.C.D.E", Some("E"));
+}
+
+#[test]
+fn hiberla_delegate_multi_partition_fully_filled_ok() {
+    test_decrypt_ok(2, "A.B.C", "A.B.C.D", Some("D"));
+}
+
+#[test]
+fn hiberla_delegate_single_partition_new_partition_ok() {
+    test_decrypt_ok(3, "A.B.C", "A.B.C.D", Some("D"));
+}
+
+#[test]
+fn hiberla_delegate_multi_partition_new_partition_ok() {
+    test_decrypt_ok(3, "A.B.C.D.E.F", "A.B.C.D.E.F.G", Some("G"));
+}
+
+#[test]
+fn hiberla_delegate_hierarchy_mismatch_fail() {
+    test_decrypt_fail(4, "A.b.C", "A.B.C.D", Some("D"));
 }

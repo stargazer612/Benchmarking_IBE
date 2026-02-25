@@ -92,6 +92,105 @@ impl HiberlaDec {
         }
     }
 
+    pub fn delegate(
+        &self,
+        mut rng: impl Rng,
+        _mpk: &MPK, // not needed, but kept for uniform interface with LW
+        usk: &USK,
+        identity: Vec<String>,
+        identity_extension: String,
+    ) -> USK {
+        let n_k = identity.len();
+        assert!(n_k > 0);
+
+        let m_k = ceil_div(n_k, self.l);
+
+        let rs = sample_fr(&mut rng, m_k + 1);
+
+        let mut new_identity = identity.clone();
+        new_identity.push(identity_extension.clone());
+
+        if n_k + 1 <= self.l * m_k {
+            let xid = hash_to_fr(&identity_extension);
+            let mut new_k_1 = usk.k_1 + usk.k_2_0[0] + usk.k_2_1[0] * xid;
+            for i in 0..n_k + 1 {
+                let xid = hash_to_fr(&new_identity[i]);
+                let b_i_0 = hash_common_var(i, 0);
+                let b_i_1 = hash_common_var(i, 1);
+                let r = rs[self.iota(i)];
+                let tmp: G1 = VariableBaseMSM::msm(&[b_i_0, b_i_1], &[r, r * xid]).unwrap();
+                new_k_1 += tmp;
+            }
+
+            // skip first entry which we used above
+            let mut new_k_2_0: Vec<G1> = usk.k_2_0.clone().into_iter().skip(1).collect();
+            let mut new_k_2_1: Vec<G1> = usk.k_2_1.clone().into_iter().skip(1).collect();
+            let mut i = n_k + 2;
+            for k in 0..new_k_2_0.len() {
+                let r = rs[m_k];
+                let b_i_0 = hash_common_var(i, 0);
+                new_k_2_0[k] += b_i_0 * r;
+
+                let b_i_1 = hash_common_var(i, 1);
+                new_k_2_1[k] += b_i_1 * r;
+
+                i += 1;
+            }
+
+            let g2 = G2::generator();
+            let mut new_k_check = usk.k_check.clone();
+            for i in 0..m_k {
+                let r = rs[i];
+                new_k_check[i] = new_k_check[i] + g2 * r;
+            }
+
+            USK {
+                identity: new_identity,
+                k_1: new_k_1,
+                k_2_0: new_k_2_0,
+                k_2_1: new_k_2_1,
+                k_check: new_k_check,
+            }
+        } else {
+            let mut new_k_1 = usk.k_1;
+            for i in 0..n_k + 1 {
+                let xid = hash_to_fr(&new_identity[i]);
+                let b_i_0 = hash_common_var(i, 0);
+                let b_i_1 = hash_common_var(i, 1);
+                let r = rs[self.iota(i)];
+                let tmp: G1 = VariableBaseMSM::msm(&[b_i_0, b_i_1], &[r, r * xid]).unwrap();
+                new_k_1 += tmp;
+            }
+
+            let cap = self.l * (m_k + 1) - (n_k + 2) + 1;
+            let mut new_k_2_0 = Vec::with_capacity(cap);
+            let mut new_k_2_1 = Vec::with_capacity(cap);
+            let r = rs[m_k];
+            for i in n_k + 2..self.l * (m_k + 1) {
+                let b_i_0 = hash_common_var(i, 0);
+                let b_i_1 = hash_common_var(i, 1);
+                new_k_2_0.push(b_i_0 * r);
+                new_k_2_1.push(b_i_1 * r);
+            }
+
+            let g2 = G2::generator();
+            let mut new_k_check = usk.k_check.clone();
+            for i in 0..m_k {
+                let r = rs[i];
+                new_k_check[i] = new_k_check[i] + g2 * r;
+            }
+            new_k_check.push(g2 * rs[m_k]);
+
+            USK {
+                identity: new_identity,
+                k_1: new_k_1,
+                k_2_0: new_k_2_0,
+                k_2_1: new_k_2_1,
+                k_check: new_k_check,
+            }
+        }
+    }
+
     pub fn encrypt(&self, mut rng: impl Rng, msg: &Gt, mpk: &MPK, identity: Vec<String>) -> CT {
         let n_c = identity.len();
         assert!(n_c > 0);
