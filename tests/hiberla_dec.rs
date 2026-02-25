@@ -28,13 +28,7 @@ fn run_scheme(
     let usk = scheme.keygen(&mut rng, &msk, user_identity.clone());
     let usk = match identity_extension {
         None => usk,
-        Some(id) => scheme.delegate(
-            &mut rng,
-            &mpk,
-            &usk,
-            user_identity.clone(),
-            String::from(id),
-        ),
+        Some(id) => scheme.delegate(&mut rng, &mpk, &usk, String::from(id)),
     };
 
     let dec = scheme.decrypt(&usk, &ct);

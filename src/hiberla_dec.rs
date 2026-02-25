@@ -97,17 +97,16 @@ impl HiberlaDec {
         mut rng: impl Rng,
         _mpk: &MPK, // not needed, but kept for uniform interface with LW
         usk: &USK,
-        identity: Vec<String>,
         identity_extension: String,
     ) -> USK {
-        let n_k = identity.len();
+        let n_k = usk.identity.len();
         assert!(n_k > 0);
 
         let m_k = ceil_div(n_k, self.l);
 
         let rs = sample_fr(&mut rng, m_k + 1);
 
-        let mut new_identity = identity.clone();
+        let mut new_identity = usk.identity.clone();
         new_identity.push(identity_extension.clone());
 
         if n_k + 1 <= self.l * m_k {
