@@ -1,7 +1,7 @@
 use ark_bls12_381::{Bls12_381, Fq12 as Gt, Fr, G1Affine, G1Projective as G1, G2Projective as G2};
 use ark_ec::pairing::Pairing;
 use ark_ec::{PrimeGroup, VariableBaseMSM};
-use ark_ff::{Field, PrimeField, UniformRand};
+use ark_ff::{Field, PrimeField, UniformRand, Zero};
 use ark_std::rand::Rng;
 
 use crate::{hash_to_fr, hash_to_g1};
@@ -223,9 +223,39 @@ impl HiberlaDec {
         }
 
         let mut result = Bls12_381::pairing(usk.k_1, ct.c).0;
-        for i in 0..n_k {
-            // TODO: make use of multi-pairings here, since r (in k_check) is the same for multiple i
-            result *= Bls12_381::pairing(-ct.c_i[i], usk.k_check[self.iota(i)]).0;
+
+        // We exploit the facts that
+        // 1) e(x, y1) * e(x, y2) = e(x, y1 + y2), and
+        // 2) self.iota(i) is identical for multiple consecutive `i` in `0..n_k`.
+        //
+        // To do so, we split the loop over `n_k`
+        // for i in 0..n_k {
+        //     result *= Bls12_381::pairing(-ct.c_i[i], usk.k_check[self.iota(i)]).0;
+        // }
+        // into `m_k-1` fully filled partitions of size `l` plus
+        // an additional `n_last` items in the last (possibly partially filled or empty) partition.
+
+        // Process the first `m_k` "fully filled" partitions of size `l`
+        let m_k = n_k / self.l;
+        for i in 0..m_k {
+            let k = usk.k_check[i];
+            let mut c = G1::zero();
+            for j in 0..self.l {
+                let idx = i * self.l + j;
+                c += ct.c_i[idx];
+            }
+            result *= Bls12_381::pairing(-c, k).0;
+        }
+
+        // Process the last "partially filled" (or empty) partition with only `n_last` items
+        let n_last = n_k % self.l;
+        let k = usk.k_check.last().unwrap();
+        let mut c = G1::zero();
+        for j in 0..n_last {
+            c += ct.c_i[m_k * self.l + j];
+        }
+        if n_last != 0 {
+            result *= Bls12_381::pairing(-c, k).0;
         }
 
         Some(ct.msg / result)
