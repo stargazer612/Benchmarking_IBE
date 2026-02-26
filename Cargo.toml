@@ -37,6 +37,10 @@ harness = false
 name = "ibkem2"
 harness = false
 
+[[bench]]
+name = "hiberla_dec"
+harness = false
+
 [lib]
 bench = false
 doctest = false
