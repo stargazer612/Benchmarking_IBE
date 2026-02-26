@@ -7,6 +7,7 @@ pub mod field_utils;
 pub mod group_functions;
 pub mod hashing;
 pub mod hiberla_dec;
+pub mod hiberla_enc;
 pub mod ibkem1;
 pub mod ibkem2;
 pub mod lw;
