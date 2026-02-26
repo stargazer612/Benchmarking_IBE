@@ -124,12 +124,90 @@ impl HiberlaEnc {
         usk: &USK,
         identity_extension: String,
     ) -> USK {
-        // TODO: implement me properly
-        USK {
-            identity: usk.identity.clone(),
-            k_1: usk.k_1.clone(),
-            k_2: usk.k_2.clone(),
-            k_check: usk.k_check.clone(),
+        let n_k = usk.identity.len();
+        assert!(n_k > 0);
+
+        let m_k = ceil_div(n_k, self.l);
+
+        let rs = sample_fr(&mut rng, m_k + 1);
+
+        let mut new_identity = usk.identity.clone();
+        new_identity.push(identity_extension.clone());
+
+        if n_k + 1 <= self.l * m_k {
+            let xid = hash_to_fr(&identity_extension);
+            let mut new_k_1 = usk.k_1 + usk.k_2[0] * xid;
+            for (i, (l, h)) in chunks(n_k + 1, self.l) {
+                let mut b_prime_l: G1 = hash_common_var(2, i).into();
+                let r = rs[i];
+                // TODO: maybe one could use MSM for the loop? A bit tricky, since size is not constant/known?
+                for j in l..h {
+                    let xid = hash_to_fr(&new_identity[j]);
+                    let b_i = hash_common_var(1, j);
+                    b_prime_l += b_i * xid;
+                }
+                new_k_1 += b_prime_l * r;
+            }
+
+            // skip the first entry which we used above
+            let mut new_k_2: Vec<G1> = usk.k_2.clone().into_iter().skip(1).collect();
+            let mut i = n_k + 2;
+            for k in 0..new_k_2.len() {
+                let b_i = hash_common_var(1, i);
+                let r = rs[m_k];
+                new_k_2[k] += b_i * r;
+                i += 1;
+            }
+
+            let g2 = G2::generator();
+            let mut new_k_check = usk.k_check.clone();
+            for i in 0..m_k {
+                let r = rs[i];
+                new_k_check[i] = new_k_check[i] + g2 * r;
+            }
+
+            USK {
+                identity: new_identity.clone(),
+                k_1: new_k_1,
+                k_2: new_k_2,
+                k_check: new_k_check,
+            }
+        } else {
+            let mut new_k_1 = usk.k_1;
+            for (i, (l, h)) in chunks(n_k + 1, self.l) {
+                let mut b_prime_l: G1 = hash_common_var(2, i).into();
+                let r = rs[i];
+                // TODO: maybe one could use MSM for the loop? A bit tricky, since size is not constant/known?
+                for j in l..h {
+                    let xid = hash_to_fr(&new_identity[j]);
+                    let b_i = hash_common_var(1, j);
+                    b_prime_l += b_i * xid;
+                }
+                new_k_1 += b_prime_l * r;
+            }
+
+            let cap = self.l * (m_k + 1) - (n_k + 2) + 1;
+            let mut new_k_2 = Vec::with_capacity(cap);
+            let r = rs[m_k];
+            for i in n_k + 2..self.l * (m_k + 1) {
+                let b_i = hash_common_var(i, 0);
+                new_k_2.push(b_i * r);
+            }
+
+            let g2 = G2::generator();
+            let mut new_k_check = usk.k_check.clone();
+            for i in 0..m_k {
+                let r = rs[i];
+                new_k_check[i] = new_k_check[i] + g2 * r;
+            }
+            new_k_check.push(g2 * rs[m_k]);
+
+            USK {
+                identity: new_identity.clone(),
+                k_1: new_k_1,
+                k_2: new_k_2,
+                k_check: new_k_check,
+            }
         }
     }
 
