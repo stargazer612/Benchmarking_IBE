@@ -13,6 +13,7 @@ ark-bls12-381 = "0.5.0"
 blake3 = "1.5"
 bit-vec = "0.8.0"
 digest = "0.10.7"
+criterion = "0.7.0"
 
 [dev-dependencies]
 criterion = "0.7.0"
