@@ -5,7 +5,7 @@ use criterion::{Criterion, criterion_group, criterion_main};
 
 use std::hint::black_box as bb;
 
-use ibe_schemes::lw::*;
+use ibe_schemes::pes::lw::*;
 
 use rand::thread_rng;
 
