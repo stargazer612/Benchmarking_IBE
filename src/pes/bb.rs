@@ -9,28 +9,28 @@ use super::IBEScheme;
 use crate::hash_to_fr;
 
 pub struct MSK {
-    pub alpha: Fr,
-    pub b_0: Fr,
-    pub b_1: Fr,
+    alpha: Fr,
+    b_0: Fr,
+    b_1: Fr,
 }
 
 pub struct MPK {
-    pub a: Gt,
-    pub b_0: G1,
-    pub b_1: G1,
+    a: Gt,
+    b_0: G1,
+    b_1: G1,
 }
 
 pub struct USK {
     pub identity: String,
-    pub r: G2,
-    pub k: G2,
+    r: G2,
+    k: G2,
 }
 
 pub struct CT {
     pub identity: String,
-    pub msg: Gt,
-    pub s: G1,
-    pub c: G1,
+    msg: Gt,
+    s: G1,
+    c: G1,
 }
 
 pub struct BB {}
