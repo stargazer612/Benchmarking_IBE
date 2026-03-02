@@ -16,10 +16,8 @@ pub struct MSK {
 
 pub struct MPK {
     pub a: Gt,
-    pub b_0_g1: G1,
-    pub b_0_g2: G2,
-    pub b_1_g1: G1,
-    pub b_1_g2: G2,
+    pub b_0: G1,
+    pub b_1: G1,
 }
 
 pub struct USK {
@@ -64,10 +62,8 @@ impl IBEScheme for BB {
 
         let mpk = MPK {
             a: Bls12_381::pairing(g1 * alpha, g2).0,
-            b_0_g1: g1 * b_0,
-            b_0_g2: g2 * b_0,
-            b_1_g1: g1 * b_1,
-            b_1_g2: g2 * b_1,
+            b_0: g1 * b_0,
+            b_1: g1 * b_1,
         };
 
         (msk, mpk)
@@ -92,7 +88,7 @@ impl IBEScheme for BB {
         let xid = hash_to_fr(&identity);
 
 	// Unexpectedly, a VariableBaseMSM here is slightly slower than the naive computation
-        let c = mpk.b_0_g1 * s + mpk.b_1_g1 * (s * xid);
+        let c = mpk.b_0 * s + mpk.b_1 * (s * xid);
 
         CT {
             identity: identity.clone(),
