@@ -7,30 +7,34 @@ use rand::thread_rng;
 
 fn run_ibe_scheme<T: IBEScheme>(
     scheme: T,
+    msg_in: Gt,
     user_identity: &str,
     ct_identity: &str,
-) -> (Gt, Option<Gt>) {
+) -> Option<Gt> {
     let mut rng = thread_rng();
 
     let (msk, mpk) = scheme.setup(&mut rng);
-
     let usk = scheme.keygen(&mut rng, &msk, String::from(user_identity));
+    let ct = scheme.encrypt(&mut rng, &msg_in, &mpk, String::from(ct_identity));
+    let msg_out = scheme.decrypt(&usk, &ct);
 
-    let k = Gt::rand(&mut rng);
-    let ct = scheme.encrypt(&mut rng, &k, &mpk, String::from(ct_identity));
-
-    let dec = scheme.decrypt(&usk, &ct);
-    return (k, dec);
+    return msg_out;
 }
 
 pub fn test_ibe_decrypt_ok<T: IBEScheme>(scheme: T, user_identity: &str, ct_identity: &str) {
-    let (k, dec) = run_ibe_scheme(scheme, user_identity, ct_identity);
-    assert!(dec.is_some_and(|k_dec| k_dec == k));
+    let mut rng = thread_rng();
+    let msg_in = Gt::rand(&mut rng);
+
+    let msg_out = run_ibe_scheme(scheme, msg_in, user_identity, ct_identity);
+    assert!(msg_out.is_some_and(|msg| msg == msg_in));
 }
 
 pub fn test_ibe_decrypt_fail<T: IBEScheme>(scheme: T, user_identity: &str, ct_identity: &str) {
-    let (_, dec) = run_ibe_scheme(scheme, user_identity, ct_identity);
-    assert!(dec.is_none());
+    let mut rng = thread_rng();
+    let msg_in = Gt::rand(&mut rng);
+
+    let msg_out = run_ibe_scheme(scheme, msg_in, user_identity, ct_identity);
+    assert!(msg_out.is_none());
 }
 
 fn parse_identity(id: &str) -> Vec<String> {
@@ -39,27 +43,26 @@ fn parse_identity(id: &str) -> Vec<String> {
 
 fn run_hibe_scheme<T: HIBEScheme>(
     scheme: T,
+    msg_in: Gt,
     user_identity: &str,
     ct_identity: &str,
     identity_extension: Option<&str>,
-) -> (Gt, Option<Gt>) {
+) -> Option<Gt> {
     let mut rng = thread_rng();
 
-    let (msk, mpk) = scheme.setup(&mut rng);
-
-    let k = Gt::rand(&mut rng);
     let ct_identity = parse_identity(ct_identity);
-    let ct = scheme.encrypt(&mut rng, &k, &mpk, ct_identity);
-
     let user_identity = parse_identity(user_identity);
+
+    let (msk, mpk) = scheme.setup(&mut rng);
+    let ct = scheme.encrypt(&mut rng, &msg_in, &mpk, ct_identity);
     let usk = scheme.keygen(&mut rng, &msk, user_identity.clone());
     let usk = match identity_extension {
         None => usk,
         Some(id) => scheme.delegate(&mut rng, &mpk, &usk, String::from(id)),
     };
 
-    let dec = scheme.decrypt(&usk, &ct);
-    return (k, dec);
+    let msg_out = scheme.decrypt(&usk, &ct);
+    return msg_out;
 }
 
 pub fn test_hibe_decrypt_ok<T: HIBEScheme>(
@@ -68,8 +71,17 @@ pub fn test_hibe_decrypt_ok<T: HIBEScheme>(
     ct_identity: &str,
     identity_extension: Option<&str>,
 ) {
-    let (k, dec) = run_hibe_scheme(scheme, user_identity, ct_identity, identity_extension);
-    assert!(dec.is_some_and(|k_dec| k_dec == k));
+    let mut rng = thread_rng();
+    let msg_in = Gt::rand(&mut rng);
+
+    let msg_out = run_hibe_scheme(
+        scheme,
+        msg_in,
+        user_identity,
+        ct_identity,
+        identity_extension,
+    );
+    assert!(msg_out.is_some_and(|msg| msg == msg_in));
 }
 
 pub fn test_hibe_decrypt_fail<T: HIBEScheme>(
@@ -78,6 +90,15 @@ pub fn test_hibe_decrypt_fail<T: HIBEScheme>(
     ct_identity: &str,
     identity_extension: Option<&str>,
 ) {
-    let (_, dec) = run_hibe_scheme(scheme, user_identity, ct_identity, identity_extension);
-    assert!(dec.is_none());
+    let mut rng = thread_rng();
+    let msg_in = Gt::rand(&mut rng);
+
+    let msg_out = run_hibe_scheme(
+        scheme,
+        msg_in,
+        user_identity,
+        ct_identity,
+        identity_extension,
+    );
+    assert!(msg_out.is_none());
 }
