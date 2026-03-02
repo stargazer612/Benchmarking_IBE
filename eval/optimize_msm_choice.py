@@ -84,10 +84,21 @@ def main():
     project_dir = _find_project_root()
     _compile_target()
 
-    N = 10_080 # has much more divisors than 10_000
-    for d in _divs(N):
-        num_msms = d
-        msm_size = N // d
+    # N = 10_080 # has much more divisors than 10_000
+    # for d in _divs(N):
+    #     num_msms = d
+    #     msm_size = N // d
+    #     res = _run_target(project_dir, num_msms, msm_size)
+    #     print(f"{num_msms} {msm_size}-MSMs take {res:.4f} ms")
+
+    for N in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 50, 100, 250, 500, 1000, 2000, 2500, 5000, 7500, 10000]:
+        num_msms = 1
+        msm_size = N
+        res = _run_target(project_dir, num_msms, msm_size)
+        print(f"{num_msms} {msm_size}-MSMs take {res:.4f} ms")
+
+        num_msms = N
+        msm_size = 1
         res = _run_target(project_dir, num_msms, msm_size)
         print(f"{num_msms} {msm_size}-MSMs take {res:.4f} ms")
 
