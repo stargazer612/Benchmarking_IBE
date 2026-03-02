@@ -104,7 +104,7 @@ impl IBEScheme for BB {
             return None;
         }
 
-        let result = Bls12_381::pairing(ct.s, usk.k).0 * Bls12_381::pairing(-ct.c, usk.r).0;
+        let result = Bls12_381::multi_pairing([ct.s, -ct.c], [usk.k, usk.r]).0;
         Some(ct.msg / result)
     }
 }
