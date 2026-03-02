@@ -1,7 +1,7 @@
 use ark_bls12_381::Fq12 as Gt;
 use ark_ff::UniformRand;
 
-use ibe_schemes::pes::lw::*;
+use ibe_schemes::pes::{HIBEScheme, lw::*};
 
 use rand::thread_rng;
 
@@ -27,13 +27,7 @@ fn run_scheme(
     let usk = lw.keygen(&mut rng, &msk, user_identity.clone());
     let usk = match identity_extension {
         None => usk,
-        Some(id) => lw.delegate(
-            &mut rng,
-            &mpk,
-            &usk,
-            user_identity.clone(),
-            String::from(id),
-        ),
+        Some(id) => lw.delegate(&mut rng, &mpk, &usk, String::from(id)),
     };
 
     let dec = lw.decrypt(&usk, &ct);

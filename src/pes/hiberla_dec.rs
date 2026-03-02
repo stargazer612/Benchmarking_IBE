@@ -4,6 +4,7 @@ use ark_ec::{PrimeGroup, VariableBaseMSM};
 use ark_ff::{Field, PrimeField, UniformRand, Zero};
 use ark_std::rand::Rng;
 
+use crate::pes::HIBEScheme;
 use crate::{hash_to_fr, hash_to_g1};
 
 pub struct MSK {
@@ -38,7 +39,18 @@ impl HiberlaDec {
         Self { l }
     }
 
-    pub fn setup(&self, mut rng: impl Rng) -> (MSK, MPK) {
+    fn iota(&self, i: usize) -> usize {
+        i / self.l
+    }
+}
+
+impl HIBEScheme for HiberlaDec {
+    type MPK = MPK;
+    type MSK = MSK;
+    type USK = USK;
+    type CT = CT;
+
+    fn setup(&self, mut rng: impl Rng) -> (MSK, MPK) {
         let alpha = Fr::rand(&mut rng);
         let msk = MSK { alpha };
 
@@ -51,7 +63,7 @@ impl HiberlaDec {
         (msk, mpk)
     }
 
-    pub fn keygen(&self, mut rng: impl Rng, msk: &MSK, identity: Vec<String>) -> USK {
+    fn keygen(&self, mut rng: impl Rng, msk: &MSK, identity: Vec<String>) -> USK {
         let n_k = identity.len();
         assert!(n_k > 0);
 
@@ -92,10 +104,10 @@ impl HiberlaDec {
         }
     }
 
-    pub fn delegate(
+    fn delegate(
         &self,
         mut rng: impl Rng,
-        _mpk: &MPK, // not needed, but kept for uniform interface with LW
+        _mpk: &MPK, // not needed, but kept for trait compliance
         usk: &USK,
         identity_extension: String,
     ) -> USK {
@@ -190,7 +202,7 @@ impl HiberlaDec {
         }
     }
 
-    pub fn encrypt(&self, mut rng: impl Rng, msg: &Gt, mpk: &MPK, identity: Vec<String>) -> CT {
+    fn encrypt(&self, mut rng: impl Rng, msg: &Gt, mpk: &MPK, identity: Vec<String>) -> CT {
         let n_c = identity.len();
         assert!(n_c > 0);
 
@@ -213,7 +225,7 @@ impl HiberlaDec {
         }
     }
 
-    pub fn decrypt(&self, usk: &USK, ct: &CT) -> Option<Gt> {
+    fn decrypt(&self, usk: &USK, ct: &CT) -> Option<Gt> {
         let n_k = usk.identity.len();
         assert!(n_k > 0);
 
@@ -258,10 +270,6 @@ impl HiberlaDec {
         }
 
         Some(ct.msg / result)
-    }
-
-    fn iota(&self, i: usize) -> usize {
-        i / self.l
     }
 }
 

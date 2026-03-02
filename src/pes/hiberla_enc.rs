@@ -6,7 +6,7 @@ use ark_ec::pairing::Pairing;
 use ark_ff::{Field, PrimeField, UniformRand};
 use ark_std::rand::Rng;
 
-use crate::{hash_to_fr, hash_to_g1};
+use crate::{hash_to_fr, hash_to_g1, pes::HIBEScheme};
 
 pub struct MSK {
     pub alpha: Fr,
@@ -38,8 +38,15 @@ impl HiberlaEnc {
     pub fn new(l: usize) -> HiberlaEnc {
         Self { l }
     }
+}
 
-    pub fn setup(&self, mut rng: impl Rng) -> (MSK, MPK) {
+impl HIBEScheme for HiberlaEnc {
+    type MPK = MPK;
+    type MSK = MSK;
+    type USK = USK;
+    type CT = CT;
+
+    fn setup(&self, mut rng: impl Rng) -> (MSK, MPK) {
         let alpha = Fr::rand(&mut rng);
         let msk = MSK { alpha };
 
@@ -52,7 +59,7 @@ impl HiberlaEnc {
         (msk, mpk)
     }
 
-    pub fn keygen(&self, mut rng: impl Rng, msk: &MSK, identity: Vec<String>) -> USK {
+    fn keygen(&self, mut rng: impl Rng, msk: &MSK, identity: Vec<String>) -> USK {
         let n_k = identity.len();
         assert!(n_k > 0);
 
@@ -90,7 +97,7 @@ impl HiberlaEnc {
         }
     }
 
-    pub fn encrypt(&self, mut rng: impl Rng, msg: &Gt, mpk: &MPK, identity: Vec<String>) -> CT {
+    fn encrypt(&self, mut rng: impl Rng, msg: &Gt, mpk: &MPK, identity: Vec<String>) -> CT {
         let n_c = identity.len();
         assert!(n_c > 0);
 
@@ -117,10 +124,10 @@ impl HiberlaEnc {
         }
     }
 
-    pub fn delegate(
+    fn delegate(
         &self,
         mut rng: impl Rng,
-        _mpk: &MPK, // not needed, but kept for uniform interface with LW
+        _mpk: &MPK, // not needed, but kept for trait compliance
         usk: &USK,
         identity_extension: String,
     ) -> USK {
@@ -211,7 +218,7 @@ impl HiberlaEnc {
         }
     }
 
-    pub fn decrypt(&self, usk: &USK, ct: &CT) -> Option<Gt> {
+    fn decrypt(&self, usk: &USK, ct: &CT) -> Option<Gt> {
         let n_k = usk.identity.len();
         assert!(n_k > 0);
 

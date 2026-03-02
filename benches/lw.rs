@@ -5,7 +5,7 @@ use criterion::{Criterion, criterion_group, criterion_main};
 
 use std::hint::black_box as bb;
 
-use ibe_schemes::pes::lw::*;
+use ibe_schemes::pes::{HIBEScheme, lw::*};
 
 use rand::thread_rng;
 
@@ -70,15 +70,7 @@ pub fn bench_lw_delegate(c: &mut Criterion) {
     let extension = String::from("E");
 
     c.bench_function("lw_delegate", |b| {
-        b.iter(|| {
-            lw.delegate(
-                bb(&mut rng),
-                bb(&mpk),
-                bb(&usk),
-                bb(identity.clone()),
-                bb(extension.clone()),
-            )
-        })
+        b.iter(|| lw.delegate(bb(&mut rng), bb(&mpk), bb(&usk), bb(extension.clone())))
     });
 }
 
