@@ -1,5 +1,5 @@
 mod common;
-use common::*;
+pub use common::*;
 
 use ibe_schemes::pes::bf::BF;
 
