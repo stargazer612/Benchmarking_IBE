@@ -91,11 +91,14 @@ impl IBEScheme for BB {
         let s = Fr::rand(&mut rng);
         let xid = hash_to_fr(&identity);
 
+	// Unexpectedly, a VariableBaseMSM here is slightly slower than the naive computation
+        let c = mpk.b_0_g1 * s + mpk.b_1_g1 * (s * xid);
+
         CT {
             identity: identity.clone(),
             msg: mpk.a.pow(s.into_bigint()) * msg,
             s: g1 * s,
-            c: mpk.b_0_g1 * s + mpk.b_1_g1 * (s * xid),
+            c,
         }
     }
 
