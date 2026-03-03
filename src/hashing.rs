@@ -59,6 +59,20 @@ pub fn generate_email_and_hash_identity(bits: usize) -> (Vec<u8>, Vec<u8>) {
     (email, identity)
 }
 
+pub fn generate_hierarchical_identity(levels: usize, bits_per_level: usize) -> (Vec<Vec<u8>>, Vec<Vec<u8>>) {
+    assert!(bits_per_level <= 256);
+    let mut emails = Vec::with_capacity(levels);
+    let mut identity_levels = Vec::with_capacity(levels);
+
+    for _ in 0..levels {
+        let (email, identity_block) = generate_email_and_hash_identity(bits_per_level);
+        emails.push(email);
+        identity_levels.push(identity_block);
+    }
+
+    (emails, identity_levels)
+}
+
 const IDENT_DOMAIN: &str = "IDENTITY";
 const DEFAULT_FIELD_HASHER_SEC_PARAM: usize = 128;
 

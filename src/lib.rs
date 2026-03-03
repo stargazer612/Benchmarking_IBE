@@ -11,6 +11,8 @@ pub mod ibkem2;
 pub mod lw;
 pub mod qanizk;
 pub mod types;
+pub mod affine_mac_levels1;
+pub mod hibkem1;
 
 pub use affine_mac::*;
 pub use bit_utils::*;
@@ -22,3 +24,5 @@ pub use ibkem1::*;
 pub use ibkem2::*;
 pub use qanizk::*;
 pub use types::*;
+pub use affine_mac_levels1::*;
+pub use hibkem1::*;

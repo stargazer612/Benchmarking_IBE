@@ -32,6 +32,34 @@ pub fn matrix_vector_mul(matrix: &Matrix<FieldElement>, vector: &Vector) -> Vect
         .collect()
 }
 
+pub fn vector_matrix_mul(vector: &Vector, matrix: &Matrix<FieldElement>) -> Vector {
+    assert_eq!(vector.len(), matrix.len());
+
+    (0..matrix[0].len())
+        .map(|j| {
+            vector.iter()
+                .zip(matrix.iter())
+                .map(|(&v_i, row_i)| v_i * row_i[j])
+                .fold(FieldElement::zero(), |acc, x| acc + x)
+        })
+        .collect()
+}
+
+// pub fn vector_matrix_mul(vector: &Vector, matrix: &Matrix<FieldElement>) -> Vector {
+//     assert!(!matrix.is_empty());
+//     assert_eq!(vector.len(), matrix.len());
+
+//     (0..matrix[0].len())
+//         .map(|j| {
+//             matrix
+//                 .iter()
+//                 .zip(vector.iter())
+//                 .map(|(row, &v)| row[j] * v)
+//                 .fold(FieldElement::zero(), |acc, x| acc + x)
+//         })
+//         .collect()
+// }
+
 pub fn vector_add(a: &Vector, b: &Vector) -> Vector {
     a.iter().zip(b.iter()).map(|(&x, &y)| x + y).collect()
 }
@@ -170,6 +198,16 @@ pub fn group_matrix_vector_mul_msm(matrix_g1: &Matrix<G1>, vector: &Vector) -> V
         .map(|row| {
             let row_affine: Vec<G1Affine> = row.iter().map(|g| g.into_affine()).collect();
             G1::msm(&row_affine, &vector).unwrap()
+        })
+        .collect()
+}
+
+pub fn group2_matrix_vector_mul_msm(matrix_g2: &Matrix<G2>, vector: &Vector) -> Vec<G2> {
+    matrix_g2
+        .iter()
+        .map(|row| {
+            let row_affine: Vec<G2Affine> = row.iter().map(|g| g.into_affine()).collect();
+            G2::msm(&row_affine, &vector).unwrap()
         })
         .collect()
 }
