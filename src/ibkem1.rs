@@ -62,8 +62,7 @@ impl IBKEM1 {
             let y_i = random_matrix(self.k, self.k);
             let y_i_transposed = matrix_transpose(&y_i);
             let x_i_transposed = matrix_transpose(&mac_sk.x_matrices[i]);
-            let combined = matrix_concat(&y_i_transposed, &x_i_transposed);
-            let z_i = matrix_multiply(&combined, &m_matrix);
+            let z_i = matrix_concat_multiply(&y_i_transposed, &x_i_transposed, &m_matrix);
 
             y_matrices.push(y_i);
             z_matrices.push(z_i);
@@ -77,8 +76,7 @@ impl IBKEM1 {
         for i in 0..=l_prime {
             let y_prime_i = random_vector(self.k);
             let combined = vector_concat(&y_prime_i, &mac_sk.x_prime[i]);
-            let m_matrix_transposed = matrix_transpose(&m_matrix);
-            let z_prime_i = matrix_vector_mul(&m_matrix_transposed, &combined);
+            let z_prime_i = matrix_transpose_vector_mul(&m_matrix, &combined);
 
             y_prime_vectors.push(y_prime_i);
             z_prime_vectors.push(z_prime_i);
