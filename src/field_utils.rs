@@ -45,21 +45,6 @@ pub fn vector_matrix_mul(vector: &Vector, matrix: &Matrix<FieldElement>) -> Vect
         .collect()
 }
 
-// pub fn vector_matrix_mul(vector: &Vector, matrix: &Matrix<FieldElement>) -> Vector {
-//     assert!(!matrix.is_empty());
-//     assert_eq!(vector.len(), matrix.len());
-
-//     (0..matrix[0].len())
-//         .map(|j| {
-//             matrix
-//                 .iter()
-//                 .zip(vector.iter())
-//                 .map(|(row, &v)| row[j] * v)
-//                 .fold(FieldElement::zero(), |acc, x| acc + x)
-//         })
-//         .collect()
-// }
-
 pub fn vector_add(a: &Vector, b: &Vector) -> Vector {
     a.iter().zip(b.iter()).map(|(&x, &y)| x + y).collect()
 }
