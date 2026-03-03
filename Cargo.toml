@@ -26,6 +26,10 @@ name = "affine-mac"
 harness = false
 
 [[bench]]
+name = "bb"
+harness = false
+
+[[bench]]
 name = "qanizk"
 harness = false
 
