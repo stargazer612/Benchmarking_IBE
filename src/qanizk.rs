@@ -46,7 +46,7 @@ impl QANIZK {
         let ka_g2 = matrix_multiply_lift_g2(&k_matrix, &a_matrix);
         let b_g1: Matrix<G1> = matrix_lift_g1(&b_matrix);
 
-        let mk_g1 = g1_matrix_transpose_multiply(&m1_matrix,&k_matrix);
+        let mk_g1 = g1_matrix_transpose_multiply(&m1_matrix, &k_matrix);
 
         let mut kjb_a_g2 = Vec::with_capacity(self.lambda);
         let mut b_kjb_g1 = Vec::with_capacity(self.lambda);

@@ -8,7 +8,7 @@ fn hibkem1_enc_dec_level_1() {
     let hibkem = HIBKEM1::new(k, max_levels, identity_len);
     let (pk, _dk, sk) = hibkem.setup();
     let (_, id) = generate_hierarchical_identity(max_levels, identity_len);
-    
+
     let id_l = id[0..1].to_vec();
     let (usk, _) = hibkem.extract(&sk, &id_l);
     let (k_enc, ct) = hibkem.encrypt(&pk, &id_l);
@@ -24,7 +24,7 @@ fn hibkem1_enc_dec_level_2() {
     let hibkem = HIBKEM1::new(k, max_levels, identity_len);
     let (pk, _dk, sk) = hibkem.setup();
     let (_, id) = generate_hierarchical_identity(max_levels, identity_len);
-    
+
     let id_l = id[0..2].to_vec();
     let (usk, _) = hibkem.extract(&sk, &id_l);
     let (k_enc, ct) = hibkem.encrypt(&pk, &id_l);
@@ -40,7 +40,7 @@ fn hibkem1_enc_dec_level_3() {
     let hibkem = HIBKEM1::new(k, max_levels, identity_len);
     let (pk, _dk, sk) = hibkem.setup();
     let (_, id) = generate_hierarchical_identity(max_levels, identity_len);
-    
+
     let id_l = id[0..3].to_vec();
     let (usk, _) = hibkem.extract(&sk, &id_l);
     let (k_enc, ct) = hibkem.encrypt(&pk, &id_l);
@@ -56,9 +56,9 @@ fn hibkem1_enc_dec_level_4() {
     let hibkem = HIBKEM1::new(k, max_levels, identity_len);
     let (pk, _dk, sk) = hibkem.setup();
     let (_, id) = generate_hierarchical_identity(max_levels, identity_len);
-    
+
     let id_l = id[0..4].to_vec();
-    
+
     let (usk, _) = hibkem.extract(&sk, &id_l);
     let (k_enc, ct) = hibkem.encrypt(&pk, &id_l);
     let k_dec = hibkem.decrypt(&usk, &ct);
@@ -141,7 +141,7 @@ fn hibkem1_extract_and_delegated_key_both_decrypt() {
     let hibkem = HIBKEM1::new(k, max_levels, identity_len);
     let (pk, dk, sk) = hibkem.setup();
     let (_, id) = generate_hierarchical_identity(max_levels, identity_len);
-    
+
     let id_l2 = id[0..2].to_vec();
 
     let (usk_direct, _) = hibkem.extract(&sk, &id_l2);

@@ -186,12 +186,7 @@ fn affine_mac_levels1_max_depth_ok() {
     let mac = AffineMacLevels1::new(k, max_levels, identity_len);
     let sk = mac.gen_mac();
 
-    let messages = vec![
-        vec![0x11u8],
-        vec![0x22u8],
-        vec![0x33u8],
-        vec![0x44u8],
-    ];
+    let messages = vec![vec![0x11u8], vec![0x22u8], vec![0x33u8], vec![0x44u8]];
     let tag = mac.tag(&sk, &messages);
     let check = mac.verify(&sk, &messages, &tag);
     assert!(check);
