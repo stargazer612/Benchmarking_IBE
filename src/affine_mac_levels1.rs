@@ -68,15 +68,6 @@ impl AffineMacLevels1 {
         let p = m.len();
         assert!(p > 0 && p <= self.max_levels, "Invalid depth p");
 
-        for (idx, m_i) in m.iter().enumerate() {
-            assert_eq!(
-                m_i.len() * 8,
-                self.identity_len,
-                "Message at level {} has incorrect length",
-                idx + 1
-            );
-        }
-
         let s = random_vector(self.k);
 
         let t_field = matrix_vector_mul(&sk_mac.b, &s);
@@ -91,13 +82,9 @@ impl AffineMacLevels1 {
                 let msg_idx = (j - 1) / self.identity_len;
                 let bit_in_msg = (j - 1) % self.identity_len;
 
-                let bit_val = if msg_idx < m.len() {
-                    bit_at(bit_in_msg, &m[msg_idx])
-                } else {
-                    0
-                };
+                let b = bit_at(bit_in_msg, &m[msg_idx]);
 
-                let x_i_j_b = &sk_mac.x_matrices[i - 1][j - 1][bit_val];
+                let x_i_j_b = &sk_mac.x_matrices[i - 1][j - 1][b];
 
                 let x_t = matrix_vector_mul(x_i_j_b, &t_field);
 
@@ -134,12 +121,6 @@ impl AffineMacLevels1 {
             return false;
         }
 
-        for m_i in m.iter() {
-            if m_i.len() * 8 != self.identity_len {
-                return false;
-            }
-        }
-
         let mut u_expected = sk_mac.x_prime.clone();
 
         for i in 1..=p {
@@ -148,13 +129,9 @@ impl AffineMacLevels1 {
                 let msg_idx = (j - 1) / self.identity_len;
                 let bit_in_msg = (j - 1) % self.identity_len;
 
-                let bit_val = if msg_idx < m.len() {
-                    bit_at(bit_in_msg, &m[msg_idx])
-                } else {
-                    0
-                };
+                let b = bit_at(bit_in_msg, &m[msg_idx]);
 
-                let x_i_j_b = &sk_mac.x_matrices[i - 1][j - 1][bit_val];
+                let x_i_j_b = &sk_mac.x_matrices[i - 1][j - 1][b];
                 let x_t = matrix_vector_mul(x_i_j_b, &tag.t_field);
                 u_expected = vector_add(&u_expected, &x_t);
             }

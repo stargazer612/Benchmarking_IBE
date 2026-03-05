@@ -27,6 +27,12 @@ pub fn generate_random_message_128() -> Vec<u8> {
     (0..16).map(|_| rand::random::<u8>()).collect()
 }
 
+pub fn generate_random_message_bits(num_bits: usize) -> Vec<u8> {
+    assert!(num_bits % 8 == 0, "num_bits must be divisible by 8");
+    let num_bytes = num_bits / 8;
+    (0..num_bytes).map(|_| rand::random::<u8>()).collect()
+}
+
 pub fn generate_random_email() -> Vec<u8> {
     let mut rng = rand::thread_rng();
     let chars = b"abcdefghijklmnopqrstuvwxyz0123456789";

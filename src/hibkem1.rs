@@ -60,8 +60,7 @@ impl HIBKEM1 {
     pub fn setup(&self) -> (HIBKEM1PublicKey, HIBKEM1DelegationKey, HIBKEM1SecretKey) {
         let sk_mac = self.mac.gen_mac();
 
-        let a_matrix = random_matrix(2 * self.k, self.k); // 2k × k
-        let a_matrix_t = matrix_transpose(&a_matrix);
+        let a_matrix = random_matrix(2 * self.k, self.k); 
 
         let mut y_matrices = Vec::with_capacity(self.max_levels);
         let mut z_g1 = Vec::with_capacity(self.max_levels);
@@ -88,8 +87,8 @@ impl HIBKEM1 {
                     let x_t = matrix_transpose(&sk_mac.x_matrices[i - 1][j - 1][b]);
                     let y_t = matrix_transpose(&y_matrix);
                     let y_x = matrix_concat(&y_t, &x_t);
+                    
                     let z_matrix = matrix_multiply(&y_x, &a_matrix);
-                    // println!("z_matrix: {} x {}", z_matrix.len(), z_matrix[0].len());
                     z_b.push(matrix_lift_g1(&z_matrix));
 
                     let d_matrix = matrix_multiply(&sk_mac.x_matrices[i - 1][j - 1][b], &sk_mac.b);
@@ -114,7 +113,7 @@ impl HIBKEM1 {
         let y_prime = random_vector(self.k);
         let y_x_prime = vector_concat(&y_prime, &sk_mac.x_prime);
 
-        let z_field = matrix_vector_mul(&a_matrix_t, &y_x_prime);
+        let z_field = vector_matrix_mul(&y_x_prime, &a_matrix);
         let z_prime_g1 = vector_lift_g1(&z_field);
 
         let b_g2 = matrix_lift_g2(&sk_mac.b);
