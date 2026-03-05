@@ -1,5 +1,6 @@
 pub mod affine_mac;
 pub mod affine_mac_levels1;
+pub mod affine_mac_levels2;
 pub mod bb;
 pub mod bf;
 pub mod bit_utils;
@@ -18,6 +19,7 @@ pub mod types;
 
 pub use affine_mac::*;
 pub use affine_mac_levels1::*;
+pub use affine_mac_levels2::*;
 pub use bit_utils::*;
 pub use blake3::*;
 pub use field_utils::*;
