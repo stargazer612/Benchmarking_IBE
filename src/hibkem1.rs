@@ -143,9 +143,9 @@ impl HIBKEM1 {
         assert!(p > 0 && p <= self.max_levels);
 
         let tag: AffineMacLevels1Tag = self.mac.tag(&sk.sk_mac, id);
-        let t_field = tag.t_field.clone();
-        let t_g2 = tag.t_g2.clone();
-        let u_g2 = tag.u_g2.clone();
+        let t_field = tag.t_field;
+        let t_g2 = tag.t_g2;
+        let u_g2 = tag.u_g2;
 
         let mut v = sk.y_prime.clone();
 
@@ -153,9 +153,9 @@ impl HIBKEM1 {
             for j in 1..=(i * self.identity_len) {
                 let msg_idx = (j - 1) / self.identity_len;
                 let bit_in_msg = (j - 1) % self.identity_len;
-                let bit_val = bit_at(bit_in_msg, &id[msg_idx]);
+                let b = bit_at(bit_in_msg, &id[msg_idx]);
 
-                let y_i_j_b = &sk.y_matrices[i - 1][j - 1][bit_val];
+                let y_i_j_b = &sk.y_matrices[i - 1][j - 1][b];
 
                 let y_t = matrix_vector_mul(y_i_j_b, &t_field);
 
@@ -228,9 +228,9 @@ impl HIBKEM1 {
         for j in 1..=num_j {
             let msg_idx = (j - 1) / self.identity_len;
             let bit_idx = (j - 1) % self.identity_len;
-            let bit = bit_at(bit_idx, &id_prime[msg_idx]);
+            let b = bit_at(bit_idx, &id_prime[msg_idx]);
 
-            let d_vec_g2 = &udk.d_g2[0][j - 1][bit];
+            let d_vec_g2 = &udk.d_g2[0][j - 1][b];
             u_prime_g2 = vector_add_g2(&u_prime_g2, &d_vec_g2);
         }
 
@@ -239,9 +239,9 @@ impl HIBKEM1 {
             for j in 1..=num_j {
                 let msg_idx = (j - 1) / self.identity_len;
                 let bit_idx = (j - 1) % self.identity_len;
-                let bit = bit_at(bit_idx, &id_prime[msg_idx]);
+                let b = bit_at(bit_idx, &id_prime[msg_idx]);
 
-                let d_cap_g2 = &dk.d_g2[i - 1][j - 1][bit];
+                let d_cap_g2 = &dk.d_g2[i - 1][j - 1][b];
                 let d_cap_s_prime = group2_matrix_vector_mul_msm(&d_cap_g2, &s_prime);
                 u_prime_g2 = vector_add_g2(&u_prime_g2, &d_cap_s_prime);
             }
@@ -253,9 +253,9 @@ impl HIBKEM1 {
         for j in 1..=num_j_p1 {
             let msg_idx = (j - 1) / self.identity_len;
             let bit_idx = (j - 1) % self.identity_len;
-            let bit = bit_at(bit_idx, &id_prime[msg_idx]);
+            let b = bit_at(bit_idx, &id_prime[msg_idx]);
 
-            let e_vec_g2 = &udk.e_g2[0][j - 1][bit];
+            let e_vec_g2 = &udk.e_g2[0][j - 1][b];
             v_prime_g2 = vector_add_g2(&v_prime_g2, &e_vec_g2);
         }
 
@@ -264,9 +264,9 @@ impl HIBKEM1 {
             for j in 1..=num_j {
                 let msg_idx = (j - 1) / self.identity_len;
                 let bit_idx = (j - 1) % self.identity_len;
-                let bit = bit_at(bit_idx, &id_prime[msg_idx]);
+                let b = bit_at(bit_idx, &id_prime[msg_idx]);
 
-                let e_cap_g2 = &dk.e_g2[i - 1][j - 1][bit];
+                let e_cap_g2 = &dk.e_g2[i - 1][j - 1][b];
                 let e_cap_s_prime = group2_matrix_vector_mul_msm(&e_cap_g2, &s_prime);
                 v_prime_g2 = vector_add_g2(&v_prime_g2, &e_cap_s_prime);
             }
@@ -357,9 +357,6 @@ impl HIBKEM1 {
     }
 
     pub fn decrypt(&self, usk: &HIBKEM1UserSecretKey, ct: &HIBKEM1Ciphertext) -> GTElement {
-        println!("v_g2.len: {}", usk.v_g2.len());
-        println!("u_g2.len: {}", usk.u_g2.len());
-
         let mut v_u_g2 = usk.v_g2.clone();
         v_u_g2.extend_from_slice(&usk.u_g2);
 

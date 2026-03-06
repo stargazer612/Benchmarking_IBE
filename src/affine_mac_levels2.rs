@@ -80,11 +80,9 @@ impl AffineMacLevels2 {
         let mut u = sk_mac.x_prime.clone();
 
         for i in 1..=p {
-            //For j=1 to i*alpha
             for j in 1..=(i * self.identity_len) {
                 let msg_idx = (j - 1) / self.identity_len;
                 let bit_in_msg = (j - 1) % self.identity_len;
-
                 let b = bit_at(bit_in_msg, &m[msg_idx]);
 
                 let x_i_j_b = &sk_mac.x_matrices[i - 1][j - 1][b];
@@ -132,11 +130,9 @@ impl AffineMacLevels2 {
         let mut u_expected = sk_mac.x_prime.clone();
 
         for i in 1..=p {
-            // For j = 1 to i*alpha
             for j in 1..=(i * self.identity_len) {
                 let msg_idx = (j - 1) / self.identity_len;
                 let bit_in_msg = (j - 1) % self.identity_len;
-
                 let b = bit_at(bit_in_msg, &m[msg_idx]);
 
                 let x_i_j_b = &sk_mac.x_matrices[i - 1][j - 1][b];
