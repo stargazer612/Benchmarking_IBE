@@ -27,6 +27,12 @@ pub fn generate_random_message_128() -> Vec<u8> {
     (0..16).map(|_| rand::random::<u8>()).collect()
 }
 
+pub fn generate_random_message_bits(num_bits: usize) -> Vec<u8> {
+    assert!(num_bits % 8 == 0, "num_bits must be divisible by 8");
+    let num_bytes = num_bits / 8;
+    (0..num_bytes).map(|_| rand::random::<u8>()).collect()
+}
+
 pub fn generate_random_email() -> Vec<u8> {
     let mut rng = rand::thread_rng();
     let chars = b"abcdefghijklmnopqrstuvwxyz0123456789";
@@ -57,6 +63,23 @@ pub fn generate_email_and_hash_identity(bits: usize) -> (Vec<u8>, Vec<u8>) {
     let hash_bits = blake3_hash_to_bits(&email, bits);
     let identity = hash_bits.to_bytes();
     (email, identity)
+}
+
+pub fn generate_hierarchical_identity(
+    levels: usize,
+    bits_per_level: usize,
+) -> (Vec<Vec<u8>>, Vec<Vec<u8>>) {
+    assert!(bits_per_level <= 256);
+    let mut emails = Vec::with_capacity(levels);
+    let mut identity_levels = Vec::with_capacity(levels);
+
+    for _ in 0..levels {
+        let (email, identity_block) = generate_email_and_hash_identity(bits_per_level);
+        emails.push(email);
+        identity_levels.push(identity_block);
+    }
+
+    (emails, identity_levels)
 }
 
 const IDENT_DOMAIN: &str = "IDENTITY";
