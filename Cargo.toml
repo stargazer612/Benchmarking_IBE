@@ -42,6 +42,10 @@ name = "hiberla_dec"
 harness = false
 
 [[bench]]
+name = "hiberla_enc"
+harness = false
+
+[[bench]]
 name = "qanizk"
 harness = false
 
