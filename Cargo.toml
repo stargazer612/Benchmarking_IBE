@@ -34,6 +34,10 @@ name = "bf"
 harness = false
 
 [[bench]]
+name = "lw"
+harness = false
+
+[[bench]]
 name = "qanizk"
 harness = false
 
