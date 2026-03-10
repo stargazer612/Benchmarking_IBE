@@ -41,6 +41,10 @@ impl IBEScheme for BF {
     type USK = USK;
     type CT = CT;
 
+    fn name(&self) -> String {
+        String::from("bf")
+    }
+
     fn setup(&self, mut rng: impl Rng) -> (MSK, MPK) {
         let alpha = Fr::rand(&mut rng);
         let msk = MSK { alpha };
