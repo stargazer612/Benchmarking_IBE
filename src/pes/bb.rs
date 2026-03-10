@@ -75,7 +75,7 @@ impl IBEScheme for BB {
         let xid = hash_to_fr(&identity);
 
         USK {
-            identity: identity.clone(),
+            identity: identity,
             r: g2 * r,
             k: g2 * (msk.alpha + r * (msk.b_0 + xid * msk.b_1)),
         }
@@ -91,7 +91,7 @@ impl IBEScheme for BB {
         let c = mpk.b_0 * s + mpk.b_1 * (s * xid);
 
         CT {
-            identity: identity.clone(),
+            identity: identity,
             msg: mpk.a.pow(s.into_bigint()) * msg,
             s: g1 * s,
             c,
