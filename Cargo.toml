@@ -38,6 +38,10 @@ name = "lw"
 harness = false
 
 [[bench]]
+name = "hiberla_dec"
+harness = false
+
+[[bench]]
 name = "qanizk"
 harness = false
 
@@ -47,10 +51,6 @@ harness = false
 
 [[bench]]
 name = "ibkem2"
-harness = false
-
-[[bench]]
-name = "hiberla_dec"
 harness = false
 
 [lib]
