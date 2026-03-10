@@ -46,6 +46,10 @@ impl HIBEScheme for HiberlaEnc {
     type USK = USK;
     type CT = CT;
 
+    fn name(&self) -> String {
+        String::from("hiberla_enc")
+    }
+
     fn setup(&self, mut rng: impl Rng) -> (MSK, MPK) {
         let alpha = Fr::rand(&mut rng);
         let msk = MSK { alpha };

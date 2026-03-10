@@ -52,6 +52,10 @@ impl HIBEScheme for LW {
     type USK = USK;
     type CT = CT;
 
+    fn name(&self) -> String {
+        String::from("lw")
+    }
+
     fn setup(&self, mut rng: impl Rng) -> (MSK, MPK) {
         let alpha = Fr::rand(&mut rng);
         let b = Fr::rand(&mut rng);

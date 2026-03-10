@@ -24,6 +24,8 @@ pub trait HIBEScheme {
     type USK;
     type CT;
 
+    fn name(&self) -> String;
+
     fn setup(&self, rng: impl Rng) -> (Self::MSK, Self::MPK);
 
     fn keygen(&self, rng: impl Rng, msk: &Self::MSK, identity: Vec<String>) -> Self::USK;
