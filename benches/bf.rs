@@ -1,64 +1,32 @@
-use ark_bls12_381::Fq12 as Gt;
-use ark_ff::UniformRand;
-
 use criterion::{Criterion, criterion_group, criterion_main};
 
-use std::hint::black_box as bb;
+use ibe_schemes::pes::bf::*;
 
-use ibe_schemes::pes::{IBEScheme, bf::*};
+mod common;
+use common::*;
 
-use rand::thread_rng;
-
-pub fn bench_bf_new(c: &mut Criterion) {
-    c.bench_function("bf_new", |b| b.iter(|| BF::new()));
-}
+// Performance of BF scheme should be independent of identity length
+// const SIZES: [usize; 9] = [1, 2, 5, 10, 15, 20, 50, 100, 250];
+const SIZES: [usize; 1] = [5];
 
 pub fn bench_bf_setup(c: &mut Criterion) {
-    let mut rng = thread_rng();
-    let bf = BF::new();
-
-    c.bench_function("bf_setup", |b| b.iter(|| bf.setup(&mut rng)));
+    bench_ibe_scheme_setup(BF::new(), c);
 }
 
 pub fn bench_bf_keygen(c: &mut Criterion) {
-    let mut rng = thread_rng();
-    let bf = BF::new();
-    let (msk, _) = bf.setup(&mut rng);
-    let identity = String::from("ABCDEF");
-
-    c.bench_function("bf_keygen", |b| {
-        b.iter(|| bf.keygen(bb(&mut rng), bb(&msk), bb(identity.clone())))
-    });
+    bench_ibe_scheme_keygen(BF::new(), &SIZES, c);
 }
 
 pub fn bench_bf_encrypt(c: &mut Criterion) {
-    let mut rng = thread_rng();
-    let bf = BF::new();
-    let (_, mpk) = bf.setup(&mut rng);
-    let identity = String::from("ABCDEF");
-    let k = Gt::rand(&mut rng);
-
-    c.bench_function("bf_encrypt", |b| {
-        b.iter(|| bf.encrypt(bb(&mut rng), bb(&k), bb(&mpk), bb(identity.clone())))
-    });
+    bench_ibe_scheme_encrypt(BF::new(), &SIZES, c);
 }
 
 pub fn bench_bf_decrypt(c: &mut Criterion) {
-    let mut rng = thread_rng();
-    let bf = BF::new();
-    let (msk, mpk) = bf.setup(&mut rng);
-    let identity = String::from("ABCDEF");
-    let usk = bf.keygen(&mut rng, &msk, identity.clone());
-
-    let k = Gt::rand(&mut rng);
-    let ct = bf.encrypt(&mut rng, &k, &mpk, identity);
-
-    c.bench_function("bf_decrypt", |b| b.iter(|| bf.decrypt(bb(&usk), bb(&ct))));
+    bench_ibe_scheme_decrypt(BF::new(), &SIZES, c);
 }
 
 criterion_group!(
     benches,
-    bench_bf_new,
     bench_bf_setup,
     bench_bf_keygen,
     bench_bf_encrypt,

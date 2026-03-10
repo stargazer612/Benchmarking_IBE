@@ -30,6 +30,10 @@ name = "bb"
 harness = false
 
 [[bench]]
+name = "bf"
+harness = false
+
+[[bench]]
 name = "qanizk"
 harness = false
 
