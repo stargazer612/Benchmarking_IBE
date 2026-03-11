@@ -57,6 +57,10 @@ harness = false
 name = "ibkem2"
 harness = false
 
+[[bench]]
+name = "scalar_mul"
+harness = false
+
 [lib]
 bench = false
 doctest = false

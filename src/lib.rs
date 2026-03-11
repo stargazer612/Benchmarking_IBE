@@ -12,6 +12,7 @@ pub mod ibkem1;
 pub mod ibkem2;
 pub mod pes;
 pub mod qanizk;
+pub mod scalar_mul;
 pub mod types;
 
 pub use affine_mac::*;
