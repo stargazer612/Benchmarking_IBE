@@ -4,6 +4,8 @@ use ark_ec::pairing::Pairing;
 use ark_ff::{Field, PrimeField, UniformRand};
 use ark_std::rand::Rng;
 
+use super::IBEScheme;
+
 use crate::hash_to_fr;
 
 pub struct MSK {
@@ -39,8 +41,19 @@ impl BB {
     pub fn new() -> BB {
         Self {}
     }
+}
 
-    pub fn setup(&self, mut rng: impl Rng) -> (MSK, MPK) {
+impl IBEScheme for BB {
+    type MPK = MPK;
+    type MSK = MSK;
+    type USK = USK;
+    type CT = CT;
+
+    fn name(&self) -> String {
+        String::from("bb")
+    }
+
+    fn setup(&self, mut rng: impl Rng) -> (MSK, MPK) {
         let alpha = Fr::rand(&mut rng);
         let b_0 = Fr::rand(&mut rng);
         let b_1 = Fr::rand(&mut rng);
@@ -60,7 +73,7 @@ impl BB {
         (msk, mpk)
     }
 
-    pub fn keygen(&self, mut rng: impl Rng, msk: &MSK, identity: String) -> USK {
+    fn keygen(&self, mut rng: impl Rng, msk: &MSK, identity: String) -> USK {
         let g2 = G2::generator();
         let r = Fr::rand(&mut rng);
         let xid = hash_to_fr(&identity);
@@ -72,7 +85,7 @@ impl BB {
         }
     }
 
-    pub fn encrypt(&self, mut rng: impl Rng, msg: &Gt, mpk: &MPK, identity: String) -> CT {
+    fn encrypt(&self, mut rng: impl Rng, msg: &Gt, mpk: &MPK, identity: String) -> CT {
         let g1 = G1::generator();
 
         let s = Fr::rand(&mut rng);
@@ -86,7 +99,7 @@ impl BB {
         }
     }
 
-    pub fn decrypt(&self, usk: &USK, ct: &CT) -> Option<Gt> {
+    fn decrypt(&self, usk: &USK, ct: &CT) -> Option<Gt> {
         if &usk.identity != &ct.identity {
             return None;
         }
