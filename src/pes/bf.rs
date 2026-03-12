@@ -1,10 +1,10 @@
 use ark_bls12_381::{Bls12_381, Fq12 as Gt, Fr, G1Projective as G1, G2Projective as G2};
 use ark_ec::PrimeGroup;
 use ark_ec::pairing::Pairing;
-use ark_ff::{Field, PrimeField, UniformRand};
+use ark_ff::{PrimeField, UniformRand};
 use ark_std::rand::Rng;
 
-use crate::{hash_to_g1, pes::IBEScheme};
+use crate::{gt_gen::gt_gen, hash_to_g1, pes::IBEScheme, scalar_mul::*};
 
 pub struct MSK {
     pub alpha: Fr,
@@ -49,11 +49,8 @@ impl IBEScheme for BF {
         let alpha = Fr::rand(&mut rng);
         let msk = MSK { alpha };
 
-        let g1 = G1::generator();
-        let g2 = G2::generator();
-
         let mpk = MPK {
-            a: Bls12_381::pairing(g1 * alpha, g2).0,
+            a: k_ary_gt(gt_gen(), alpha.into_bigint()),
         };
 
         (msk, mpk)
@@ -65,10 +62,13 @@ impl IBEScheme for BF {
         let r = Fr::rand(&mut rng);
         let bid = hash_to_g1(&identity);
 
+        // Unexpectedly, a VariableBaseMSM here is slightly slower than the naive computation
+        let k = g1 * msk.alpha + bid * r;
+
         USK {
-            identity: identity.clone(),
-            r: g2 * r,
-            k: g1 * msk.alpha + bid * r,
+            identity: identity,
+            r: k_ary_g2(g2, r.into_bigint()),
+            k,
         }
     }
 
@@ -79,9 +79,9 @@ impl IBEScheme for BF {
         let bid = hash_to_g1(&identity);
 
         CT {
-            identity: identity.clone(),
-            msg: mpk.a.pow(s.into_bigint()) * msg,
-            s: g2 * s,
+            identity: identity,
+            msg: k_ary_gt(mpk.a, s.into_bigint()) * msg,
+            s: k_ary_g2(g2, s.into_bigint()),
             c: bid * s,
         }
     }
@@ -91,7 +91,7 @@ impl IBEScheme for BF {
             return None;
         }
 
-        let result = Bls12_381::pairing(usk.k, ct.s).0 * Bls12_381::pairing(-ct.c, usk.r).0;
+        let result = Bls12_381::multi_pairing([usk.k, -ct.c], [ct.s, usk.r]).0;
         Some(ct.msg / result)
     }
 }

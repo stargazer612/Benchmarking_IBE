@@ -5,6 +5,7 @@ pub mod bit_utils;
 pub mod blake3;
 pub mod field_utils;
 pub mod group_functions;
+pub mod gt_gen;
 pub mod hashing;
 pub mod hibkem1;
 pub mod hibkem2;
@@ -12,6 +13,7 @@ pub mod ibkem1;
 pub mod ibkem2;
 pub mod pes;
 pub mod qanizk;
+pub mod scalar_mul;
 pub mod types;
 
 pub use affine_mac::*;
