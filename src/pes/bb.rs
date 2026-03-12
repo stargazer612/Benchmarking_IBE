@@ -75,8 +75,11 @@ impl IBEScheme for BB {
 
         USK {
             identity: identity,
-            r: g2 * r,
-            k: g2 * (msk.alpha + r * (msk.b_0 + xid * msk.b_1)),
+            r: k_ary_g2(g2, r.into_bigint()),
+            k: k_ary_g2(
+                g2,
+                (msk.alpha + r * (msk.b_0 + xid * msk.b_1)).into_bigint(),
+            ),
         }
     }
 
