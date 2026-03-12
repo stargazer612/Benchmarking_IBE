@@ -1,10 +1,10 @@
 use ark_bls12_381::{Bls12_381, Fq12 as Gt, Fr, G1Projective as G1, G2Projective as G2};
 use ark_ec::PrimeGroup;
 use ark_ec::pairing::Pairing;
-use ark_ff::{Field, PrimeField, UniformRand};
+use ark_ff::{PrimeField, UniformRand};
 use ark_std::rand::Rng;
 
-use crate::{gt_gen::gt_gen, hash_to_g1, pes::IBEScheme};
+use crate::{gt_gen::gt_gen, hash_to_g1, pes::IBEScheme, scalar_mul::k_ary_gt};
 
 pub struct MSK {
     pub alpha: Fr,
@@ -50,7 +50,7 @@ impl IBEScheme for BF {
         let msk = MSK { alpha };
 
         let mpk = MPK {
-            a: gt_gen().pow(alpha.into_bigint()),
+            a: k_ary_gt(gt_gen(), alpha.into_bigint()),
         };
 
         (msk, mpk)
@@ -77,7 +77,7 @@ impl IBEScheme for BF {
 
         CT {
             identity: identity,
-            msg: mpk.a.pow(s.into_bigint()) * msg,
+            msg: k_ary_gt(mpk.a, s.into_bigint()) * msg,
             s: g2 * s,
             c: bid * s,
         }
