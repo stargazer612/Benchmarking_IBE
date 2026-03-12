@@ -6,7 +6,7 @@ use ark_std::rand::Rng;
 
 use super::IBEScheme;
 
-use crate::hash_to_fr;
+use crate::{gt_gen::gt_gen, hash_to_fr};
 
 pub struct MSK {
     alpha: Fr,
@@ -58,10 +58,9 @@ impl IBEScheme for BB {
         let msk = MSK { alpha, b_0, b_1 };
 
         let g1 = G1::generator();
-        let g2 = G2::generator();
 
         let mpk = MPK {
-            a: Bls12_381::pairing(g1 * alpha, g2).0,
+            a: gt_gen().pow(alpha.into_bigint()),
             b_0: g1 * b_0,
             b_1: g1 * b_1,
         };
@@ -87,7 +86,7 @@ impl IBEScheme for BB {
         let s = Fr::rand(&mut rng);
         let xid = hash_to_fr(&identity);
 
-	// Unexpectedly, a VariableBaseMSM here is slightly slower than the naive computation
+        // Unexpectedly, a VariableBaseMSM here is slightly slower than the naive computation
         let c = mpk.b_0 * s + mpk.b_1 * (s * xid);
 
         CT {
