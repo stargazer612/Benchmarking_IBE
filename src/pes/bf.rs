@@ -66,7 +66,7 @@ impl IBEScheme for BF {
         let bid = hash_to_g1(&identity);
 
         USK {
-            identity: identity.clone(),
+            identity: identity,
             r: g2 * r,
             k: g1 * msk.alpha + bid * r,
         }
@@ -79,7 +79,7 @@ impl IBEScheme for BF {
         let bid = hash_to_g1(&identity);
 
         CT {
-            identity: identity.clone(),
+            identity: identity,
             msg: mpk.a.pow(s.into_bigint()) * msg,
             s: g2 * s,
             c: bid * s,
