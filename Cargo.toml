@@ -61,6 +61,10 @@ harness = false
 name = "scalar_mul"
 harness = false
 
+[[bench]]
+name = "gt_gen"
+harness = false
+
 [lib]
 bench = false
 doctest = false
