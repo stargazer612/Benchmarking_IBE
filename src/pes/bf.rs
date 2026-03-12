@@ -62,10 +62,13 @@ impl IBEScheme for BF {
         let r = Fr::rand(&mut rng);
         let bid = hash_to_g1(&identity);
 
+        // Unexpectedly, a VariableBaseMSM here is slightly slower than the naive computation
+        let k = g1 * msk.alpha + bid * r;
+
         USK {
             identity: identity,
             r: g2 * r,
-            k: g1 * msk.alpha + bid * r,
+            k,
         }
     }
 
