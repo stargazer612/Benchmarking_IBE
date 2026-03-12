@@ -4,7 +4,7 @@ use ark_ec::pairing::Pairing;
 use ark_ff::{Field, PrimeField, UniformRand};
 use ark_std::rand::Rng;
 
-use crate::{hash_to_g1, pes::IBEScheme};
+use crate::{gt_gen::gt_gen, hash_to_g1, pes::IBEScheme};
 
 pub struct MSK {
     pub alpha: Fr,
@@ -49,11 +49,8 @@ impl IBEScheme for BF {
         let alpha = Fr::rand(&mut rng);
         let msk = MSK { alpha };
 
-        let g1 = G1::generator();
-        let g2 = G2::generator();
-
         let mpk = MPK {
-            a: Bls12_381::pairing(g1 * alpha, g2).0,
+            a: gt_gen().pow(alpha.into_bigint()),
         };
 
         (msk, mpk)
