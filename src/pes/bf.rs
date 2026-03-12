@@ -91,7 +91,7 @@ impl IBEScheme for BF {
             return None;
         }
 
-        let result = Bls12_381::pairing(usk.k, ct.s).0 * Bls12_381::pairing(-ct.c, usk.r).0;
+        let result = Bls12_381::multi_pairing([usk.k, -ct.c], [ct.s, usk.r]).0;
         Some(ct.msg / result)
     }
 }
